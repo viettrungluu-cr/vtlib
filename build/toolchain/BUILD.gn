@@ -5,6 +5,9 @@ toolchain("gcc_toolchain") {
   ld = "g++"
   strip = "strip"
 
+  lib_switch = "-l"
+  lib_dir_switch = "-L"
+
   extra_cflags = ""
   extra_cppflags = ""
   extra_cxxflags = ""
