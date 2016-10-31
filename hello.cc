@@ -1,5 +1,5 @@
-#include <stdio.h>
+#include "hello.h"
 
-int main() {
-  printf("hello world\n");
+std::string GetHello() {
+  return std::string("hello world");
 }

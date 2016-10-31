@@ -1,0 +1,12 @@
+template("test") {
+  executable(target_name) {
+    testonly = true
+
+    deps = []
+    sources = []
+    forward_variables_from(invoker, "*")
+
+    sources += [ "//testing/gtest_main.cc" ]
+    deps += [ "//third_party/gtest" ]
+  }
+}

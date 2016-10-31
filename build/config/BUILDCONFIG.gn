@@ -33,3 +33,7 @@ set_defaults("executable") {
 }
 
 set_default_toolchain("//build/toolchain:gcc_toolchain")
+
+# TODO(vtl): Get rid of these.
+is_linux = true
+is_mac = false
