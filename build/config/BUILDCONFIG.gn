@@ -1,0 +1,35 @@
+declare_args() {
+  is_debug = true
+}
+
+_shared_binary_target_configs = [
+  "//build/config:compiler",
+  "//build/config:default_include_dirs",
+  "//build/config:default_warnings",
+  "//build/config:no_exceptions",
+  "//build/config:no_rtti",
+]
+if (is_debug) {
+  _shared_binary_target_configs += [ "//build/config:debug" ]
+} else {
+  _shared_binary_target_configs += [ "//build/config:release" ]
+}
+
+set_defaults("source_set") {
+  configs = _shared_binary_target_configs
+}
+set_defaults("static_library") {
+  configs = _shared_binary_target_configs
+}
+set_defaults("shared_library") {
+  configs = _shared_binary_target_configs + [
+              "//build/config:shared_library_config",
+              "//build/config:symbol_visibility_hidden",
+            ]
+}
+set_defaults("executable") {
+  configs =
+      _shared_binary_target_configs + [ "//build/config:executable_config" ]
+}
+
+set_default_toolchain("//build/toolchain:gcc_toolchain")

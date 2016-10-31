@@ -1,0 +1,63 @@
+config("compiler") {
+  asmflags = []
+  cflags = []
+  cflags_c = [ "-std=c11" ]
+  cflags_cc = [
+    "-fvisibility-inlines-hidden",
+    "-std=c++11",
+  ]
+  ldflags = []
+  defines = []
+  configs = []
+
+  asmflags += cflags
+  asmflags += cflags_c
+}
+
+config("debug") {
+  cflags = [
+    "-g",
+    "-O0",
+  ]
+}
+
+config("release") {
+  cflags = [ "-O2" ]
+  defines = [ "NDEBUG=1" ]
+}
+
+config("default_include_dirs") {
+  include_dirs = [
+    "//",
+    root_gen_dir,
+  ]
+}
+
+config("default_warnings") {
+  cflags = [
+    "-Wall",
+    "-Wextra",
+    "-Wno-unused-parameter",
+  ]
+}
+
+config("no_exceptions") {
+  cflags_cc = [ "-fno-exceptions" ]
+}
+
+config("no_rtti") {
+  cflags_cc = [ "-fno-rtti" ]
+}
+
+config("shared_library_config") {
+  configs = []
+  cflags = [ "-fPIC" ]
+}
+
+config("symbol_visibility_hidden") {
+  cflags = [ "-fvisibility=hidden" ]
+}
+
+config("executable_config") {
+  configs = []
+}
