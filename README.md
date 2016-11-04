@@ -1,6 +1,6 @@
-# hello_gtest
+# vtlib
 
-Example with minimal gn build files with gtest support.
+TODO(vtl)
 
 Get gtest as follows:
 ```

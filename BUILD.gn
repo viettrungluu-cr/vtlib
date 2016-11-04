@@ -1,28 +1,46 @@
-import("//testing/test.gni")
+config("config") {
+  include_dirs = [ "include" ]
+}
 
-source_set("hello_lib") {
-  sources = [
-    "hello.cc",
-    "hello.h",
+group("all") {
+  testonly = true
+
+  deps = [
+    ":vtlib",
   ]
 }
 
-executable("hello") {
-  sources = [
-    "main.cc",
-  ]
-
-  deps = [
-    ":hello_lib",
+static_library("vtlib") {
+  public_deps = [
+    "src:vtlib_impl",
   ]
 }
 
-test("hello_test") {
+source_set("headers") {
   sources = [
-    "hello_unittest.cc",
+    "include/vtlib/cell.h",
+    "include/vtlib/character.h",
+    "include/vtlib/character_encoding.h",
+    "include/vtlib/color.h",
+    "include/vtlib/terminal.h",
   ]
 
+  public_configs = [ ":config" ]
+
   deps = [
-    ":hello_lib",
+    ":headers_internal",
   ]
+}
+
+source_set("headers_internal") {
+  visibility = [
+    ":headers",
+    "src/*",
+  ]
+
+  sources = [
+    "include/vtlib/internal/input.h",
+  ]
+
+  public_configs = [ ":config" ]
 }

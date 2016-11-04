@@ -1,0 +1,33 @@
+import("//testing/test.gni")
+
+source_set("vtlib_impl") {
+  sources = [
+    "input.cc",
+  ]
+
+  deps = [
+    "//:headers_internal",
+  ]
+
+  public_deps = [
+    "//:headers",
+  ]
+}
+
+group("tests") {
+  testonly = true
+
+  deps = [
+    ":input_test",
+  ]
+}
+
+test("input_test") {
+  sources = [
+    "input_unittest.cc",
+  ]
+
+  deps = [
+    ":vtlib_impl",
+  ]
+}
