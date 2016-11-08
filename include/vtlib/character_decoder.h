@@ -4,6 +4,9 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include <memory>
+
+#include <vtlib/character_encoding.h>
 #include <vtlib/token.h>
 
 namespace vtlib {
@@ -13,6 +16,11 @@ constexpr size_t kMaxOutputTokensPerInputByte = 4u;
 class CharacterDecoder {
  public:
   virtual ~CharacterDecoder() {}
+
+  // Static factory method. Returns null if a character encoding is not
+  // supported.
+  static std::unique_ptr<CharacterDecoder> Create(
+      CharacterEncoding character_encoding);
 
   // |input_byte| is the input byte to be processed. |output tokens| should
   // point to a buffer with space for at least |kMaxOutputTokensPerInputByte|

@@ -2,6 +2,7 @@ import("//testing/test.gni")
 
 source_set("vtlib_impl") {
   sources = [
+    "character_decoder.cc",
     "tokenizer.cc",
   ]
 
