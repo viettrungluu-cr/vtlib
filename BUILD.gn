@@ -20,9 +20,10 @@ source_set("headers") {
   sources = [
     "include/vtlib/cell.h",
     "include/vtlib/character.h",
-    "include/vtlib/character_encoding.h",
+    "include/vtlib/character_decoder.h",
     "include/vtlib/color.h",
     "include/vtlib/terminal.h",
+    "include/vtlib/token.h",
   ]
 
   public_configs = [ ":config" ]

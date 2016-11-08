@@ -1,42 +1,62 @@
 #include <vtlib/internal/input.h>
 
+#include <assert.h>
+
+#include <utility>
+
 namespace vtlib {
 namespace internal {
 
-size_t Tokenizer::OnInput(uint8_t input_byte, Token* tokens) {
-  if (num_buffered_bytes_)
-    return OnInputContinued(input_byte, tokens);
+Tokenizer::Tokenizer(bool accept_8bit_C1,
+          std::unique_ptr<CharacterDecoder> character_decoder)
+    : accept_8bit_C1_(accept_8bit_C1),
+      character_decoder_(std::move(character_decoder)),
+      got_ESC_(false) {
+  assert(character_decoder_);
+}
 
+Tokenizer::~Tokenizer() {}
+
+void Tokenizer::ProcessByte(uint8_t input_byte,
+                            size_t* num_output_tokens,
+                            Token* output_tokens) {
   if (got_ESC_) {
     got_ESC_ = false;
-  }
-
-  if (input_byte < 32u) {
-  }
 //FIXME
 
-  return 0u;
-}
+    return;
+  }
 
-void Tokenizer::SetAllow8bitC1(bool allow_8bit_C1) {
-  allow_8bit_C1_ = allow_8bit_C1;
-}
-
-void Tokenizer::SetCharacterEncoding(CharacterEncoding character_encoding) {
-  if (character_encoding_ == character_encoding)
+  if (character_decoder_->ProcessByte(input_byte, num_output_tokens,
+                                      output_tokens))
     return;
 
-  // Flush buffered bytes. TODO(vtl): Is this right? (Or maybe, e.g., if the
-  // previous encoding was UTF-8, we should emit replacement characters? This
-  // would require being able to emit characters here.)
-  num_buffered_bytes_ = 0u;
-  character_encoding_ = character_encoding;
+  if (CharacterDecoder::is_control_code(input_byte)) {
+    // ESC is processed into sequences that may be transformed into C1 control
+    // codes.
+    if (input_byte == 27u) {
+      got_ESC_ = true;
+      return;
+    }
+
+    if (CharacterDecoder::is_C0_control_code(input_byte) ||
+        (accept_8bit_C1_ && CharacterDecoder::is_C1_control_code(input_byte))) {
+      assert(*num_output_tokens < kMaxOutputTokensPerInputByte);
+      output_tokens[*num_output_tokens] = -static_cast<Token>(input_byte);
+      (*num_output_tokens)++;
+      return;
+    }
+  }
+
+  // Otherwise, just eat unknown/invalid characters (and 8-bit C1 control codes
+  // when they are not being accepted).
 }
 
-size_t Tokenizer::OnInputContinued(uint8_t input_byte, Token* tokens) {
-//FIXME
-
-  return 0u;
+std::unique_ptr<CharacterDecoder> Tokenizer::set_character_decoder(
+    std::unique_ptr<CharacterDecoder> character_decoder) {
+  assert(character_decoder);
+  std::swap(character_decoder, character_decoder_);
+  return character_decoder;
 }
 
 }  // namespace internal

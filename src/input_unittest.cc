@@ -8,7 +8,7 @@ namespace {
 
 //FIXME
 TEST(InputTest, Todo) {
-  Tokenizer t(false, CharacterEncoding::UTF8);
+//  Tokenizer t(false, CharacterEncoding::UTF8);
 }
 
 }  // namespace
