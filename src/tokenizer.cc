@@ -21,9 +21,13 @@ void Tokenizer::ProcessByte(uint8_t input_byte,
                             Token* output_tokens) {
   if (got_ESC_) {
     got_ESC_ = false;
-//FIXME
-
-    return;
+    if (input_byte >= 64u && input_byte <= 95u) {
+      output_tokens[0] = -static_cast<Token>(input_byte) - 64;
+      (*num_output_tokens) = 1u;
+      return;
+    }
+    // On an invalid escape sequence ESC c, will just drop the ESC and start
+    // anew with c.
   }
 
   if (character_decoder_->ProcessByte(input_byte, num_output_tokens,

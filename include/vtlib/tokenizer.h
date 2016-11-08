@@ -33,9 +33,18 @@ namespace vtlib {
 // is processed as possibly being a C0 control code or (if enabled) an 8-bit C1
 // control code.
 //
+// Invalid escape sequence processing: If we encounter ESC c for some c outside
+// the range 64..95, we simply forget about the ESC and process c as if it were
+// a new character. E.g., if we encounter ESC c1 c2 c3 ... where c1 c2 is a
+// valid two-byte UTF-8 encoding, we will decode c1 c2 c3 .... As far as I can
+// tell, this is like screen, unlike XTerm (which will also drop the next
+// graphical character, i.e., c1 c2), and unlike Gnome Terminal (which is
+// confused).
+//
 // TODO(vtl): Moar.
 
-//FIXME
+// This class turns a sequence of input bytes into a sequence of |Token|s (each
+// of which is either a Unicode codepoint or a control code).
 class Tokenizer {
  public:
   Tokenizer(bool accept_8bit_C1,
