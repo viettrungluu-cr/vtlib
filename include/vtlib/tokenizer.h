@@ -7,6 +7,7 @@
 #include <memory>
 
 #include <vtlib/character_decoder.h>
+#include <vtlib/character_encoding.h>
 #include <vtlib/token.h>
 
 namespace vtlib {
@@ -47,8 +48,11 @@ namespace vtlib {
 // of which is either a Unicode codepoint or a control code).
 class Tokenizer {
  public:
+  // Constructs a |Tokenizer| with the given |CharacterDecoder|.
   Tokenizer(bool accept_8bit_C1,
             std::unique_ptr<CharacterDecoder> character_decoder);
+  // Constructs a |Tokenizer| to handle the given |CharacterEncoding|.
+  Tokenizer(bool accept_8bit_C1, CharacterEncoding character_encoding);
   ~Tokenizer();
 
   Tokenizer(const Tokenizer&) = delete;

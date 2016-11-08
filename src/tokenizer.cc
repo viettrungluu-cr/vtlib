@@ -7,12 +7,16 @@
 namespace vtlib {
 
 Tokenizer::Tokenizer(bool accept_8bit_C1,
-          std::unique_ptr<CharacterDecoder> character_decoder)
+                     std::unique_ptr<CharacterDecoder> character_decoder)
     : accept_8bit_C1_(accept_8bit_C1),
       character_decoder_(std::move(character_decoder)),
       got_ESC_(false) {
   assert(character_decoder_);
 }
+
+Tokenizer::Tokenizer(bool accept_8bit_C1,
+                     CharacterEncoding character_encoding)
+    : Tokenizer(accept_8bit_C1, CharacterDecoder::Create(character_encoding)) {}
 
 Tokenizer::~Tokenizer() {}
 
