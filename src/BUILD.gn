@@ -2,6 +2,7 @@ import("//testing/test.gni")
 
 source_set("vtlib_impl") {
   sources = [
+    "ascii_character_decoder.h",
     "character_decoder.cc",
     "tokenizer.cc",
   ]
