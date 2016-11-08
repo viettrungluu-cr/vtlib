@@ -1,11 +1,10 @@
-#include <vtlib/internal/input.h>
+#include <vtlib/tokenizer.h>
 
 #include <assert.h>
 
 #include <utility>
 
 namespace vtlib {
-namespace internal {
 
 Tokenizer::Tokenizer(bool accept_8bit_C1,
           std::unique_ptr<CharacterDecoder> character_decoder)
@@ -59,5 +58,4 @@ std::unique_ptr<CharacterDecoder> Tokenizer::set_character_decoder(
   return character_decoder;
 }
 
-}  // namespace internal
 }  // namespace vtlib

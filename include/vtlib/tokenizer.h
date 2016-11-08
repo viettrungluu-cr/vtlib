@@ -1,5 +1,5 @@
-#ifndef VTLIB_INCLUDE_VTLIB_INTERNAL_INPUT_H_
-#define VTLIB_INCLUDE_VTLIB_INTERNAL_INPUT_H_
+#ifndef VTLIB_INCLUDE_VTLIB_TOKENIZER_H_
+#define VTLIB_INCLUDE_VTLIB_TOKENIZER_H_
 
 #include <stddef.h>
 #include <stdint.h>
@@ -10,16 +10,16 @@
 #include <vtlib/token.h>
 
 namespace vtlib {
-namespace internal {
 
+// TODO(vtl): Move this somewhere else.
 // Input processing happens in several stages:
 //
-// 1. Character encoding and control code processing: The initial input is a
-// stream of bytes; the output is a stream of *tokens* that are either
-// (graphical) characters (as Unicode codepoints) or "C0 and C1" control codes.
-// This stage may map multiple (consecutive) input bytes to a single token. (A
-// single input byte may also result in multiple output tokens, e.g., if it
-// changes the interpretation of previously-received bytes.)
+// 1. Character encoding and control code processing (done by |Tokenizer|): The
+// initial input is a stream of bytes; the output is a stream of *tokens* that
+// are either (graphical) characters (as Unicode codepoints) or "C0 and C1"
+// control codes. This stage may map multiple (consecutive) input bytes to a
+// single token. (A single input byte may also result in multiple output tokens,
+// e.g., if it changes the interpretation of previously-received bytes.)
 //
 // C0 control codes are bytes in the range 0..31. 8-bit C1 control codes are
 // bytes in the range 128..159. There is also a two-byte sequence for each C1
@@ -33,7 +33,7 @@ namespace internal {
 // is processed as possibly being a C0 control code or (if enabled) an 8-bit C1
 // control code.
 //
-// TODO
+// TODO(vtl): Moar.
 
 //FIXME
 class Tokenizer {
@@ -73,7 +73,6 @@ class Tokenizer {
   bool got_ESC_;
 };
 
-}  // namespace internal
 }  // namespace vtlib
 
-#endif  // VTLIB_INCLUDE_VTLIB_INTERNAL_INPUT_H_
+#endif  // VTLIB_INCLUDE_VTLIB_TOKENIZER_H_

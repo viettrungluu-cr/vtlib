@@ -24,23 +24,7 @@ source_set("headers") {
     "include/vtlib/color.h",
     "include/vtlib/terminal.h",
     "include/vtlib/token.h",
-  ]
-
-  public_configs = [ ":config" ]
-
-  deps = [
-    ":headers_internal",
-  ]
-}
-
-source_set("headers_internal") {
-  visibility = [
-    ":headers",
-    "src/*",
-  ]
-
-  sources = [
-    "include/vtlib/internal/input.h",
+    "include/vtlib/tokenizer.h",
   ]
 
   public_configs = [ ":config" ]
