@@ -11,7 +11,7 @@ std::unique_ptr<CharacterDecoder> CharacterDecoder::Create(
     case CharacterEncoding::ASCII:
       // TODO(C++14): Here and below, no make_unique in C++11. :(
       return std::unique_ptr<CharacterDecoder>(new AsciiCharacterDecoder());
-    case CharacterEncoding::UTF_8:
+    case CharacterEncoding::UTF8:
       // TODO(vtl)
       break;
   }

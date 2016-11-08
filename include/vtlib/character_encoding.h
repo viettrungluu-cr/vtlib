@@ -7,7 +7,7 @@ namespace vtlib {
 
 enum class CharacterEncoding {
   ASCII,
-  UTF_8,
+  UTF8,
 };
 
 }  // namespace vtlib

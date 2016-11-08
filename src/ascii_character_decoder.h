@@ -1,3 +1,6 @@
+#ifndef VTLIB_SRC_ASCII_CHARACTER_DECODER_H_
+#define VTLIB_SRC_ASCII_CHARACTER_DECODER_H_
+
 #include <vtlib/character_decoder.h>
 
 namespace vtlib {
@@ -22,14 +25,8 @@ class AsciiCharacterDecoder : public CharacterDecoder {
     *num_output_tokens = 1u;
     return true;
   }
-
-  // Static helper functions to determine whether a given byte is a control
-  // code.
-  static bool is_C0_control_code(uint8_t b) { return b <= 31u; }
-  static bool is_C1_control_code(uint8_t b) { return b >= 128u && b <= 159u; }
-  static bool is_control_code(uint8_t b) {
-    return is_C0_control_code(b) || is_C1_control_code(b);
-  }
 };
 
 }  // namespace vtlib
+
+#endif  // VTLIB_SRC_ASCII_CHARACTER_DECODER_H_
