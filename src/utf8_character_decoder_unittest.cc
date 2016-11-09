@@ -212,6 +212,89 @@ TEST(Utf8CharacterDecoderTest, InvalidCodepoints3) {
   }
 }
 
+TEST(Utf8CharacterDecoderTest, Overlong2Byte) {
+  Utf8CharacterDecoder d;
+
+  for (uint32_t c = 0u; c < 0x80u; c++) {
+    // After the first byte, we can already tell that it's invalid.
+    size_t n = static_cast<size_t>(-1);
+    Token t[kMaxOutputTokensPerInputByte];
+    t[0] = 0;
+    EXPECT_TRUE(d.ProcessByte(static_cast<uint8_t>((c >> 6u) | 0xc0u), &n, t));
+    EXPECT_EQ(1u, n);
+    EXPECT_EQ(d.replacement_token(), t[0]);
+
+    n = static_cast<size_t>(-1);
+    t[0] = 0;
+    EXPECT_TRUE(d.ProcessByte(static_cast<uint8_t>((c & 0x3f) | 0x80u), &n, t));
+    EXPECT_EQ(1u, n);
+    EXPECT_EQ(d.replacement_token(), t[0]);
+  }
+}
+
+TEST(Utf8CharacterDecoderTest, Overlong3Byte) {
+  Utf8CharacterDecoder d;
+
+  for (uint32_t c = 0u; c < 0x800u; c++) {
+    // After the first byte, we can't tell anything.
+    size_t n = static_cast<size_t>(-1);
+    Token t[kMaxOutputTokensPerInputByte];
+    EXPECT_TRUE(d.ProcessByte(static_cast<uint8_t>((c >> 12u) | 0xe0u), &n, t));
+    EXPECT_EQ(0u, n);
+
+    // After the second byte, we can already tell that it's invalid.
+    n = static_cast<size_t>(-1);
+    t[0] = 0;
+    t[1] = 0;
+    EXPECT_TRUE(d.ProcessByte(static_cast<uint8_t>(((c >> 6u) & 0x3fu) | 0x80u),
+                              &n, t));
+    EXPECT_EQ(2u, n);
+    EXPECT_EQ(d.replacement_token(), t[0]);
+    EXPECT_EQ(d.replacement_token(), t[1]);
+
+    n = static_cast<size_t>(-1);
+    t[0] = 0;
+    EXPECT_TRUE(d.ProcessByte(static_cast<uint8_t>((c & 0x3f) | 0x80u), &n, t));
+    EXPECT_EQ(1u, n);
+    EXPECT_EQ(d.replacement_token(), t[0]);
+  }
+}
+
+TEST(Utf8CharacterDecoderTest, Overlong4Byte) {
+  Utf8CharacterDecoder d;
+
+  for (uint32_t c = 0u; c < 0x10000u; c++) {
+    // After the first byte, we can't tell anything.
+    size_t n = static_cast<size_t>(-1);
+    Token t[kMaxOutputTokensPerInputByte];
+    EXPECT_TRUE(d.ProcessByte(static_cast<uint8_t>((c >> 18u) | 0xf0u), &n, t));
+    EXPECT_EQ(0u, n);
+
+    // After the second byte, we can already tell that it's invalid.
+    n = static_cast<size_t>(-1);
+    t[0] = 0;
+    t[1] = 0;
+    EXPECT_TRUE(d.ProcessByte(
+        static_cast<uint8_t>(((c >> 12u) & 0x3fu) | 0x80u), &n, t));
+    EXPECT_EQ(2u, n);
+    EXPECT_EQ(d.replacement_token(), t[0]);
+    EXPECT_EQ(d.replacement_token(), t[1]);
+
+    n = static_cast<size_t>(-1);
+    t[0] = 0;
+    EXPECT_TRUE(d.ProcessByte(static_cast<uint8_t>(((c >> 6u) & 0x3fu) | 0x80u),
+                &n, t));
+    EXPECT_EQ(1u, n);
+    EXPECT_EQ(d.replacement_token(), t[0]);
+
+    n = static_cast<size_t>(-1);
+    t[0] = 0;
+    EXPECT_TRUE(d.ProcessByte(static_cast<uint8_t>((c & 0x3f) | 0x80u), &n, t));
+    EXPECT_EQ(1u, n);
+    EXPECT_EQ(d.replacement_token(), t[0]);
+  }
+}
+
 // TODO(vtl): overlong encodings, moar invalid codepoints, "interrupted"
 // encodings
 
