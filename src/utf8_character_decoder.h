@@ -11,7 +11,9 @@ namespace vtlib {
 // A character decoder for UTF-8.
 class Utf8CharacterDecoder : public CharacterDecoder {
  public:
-  Utf8CharacterDecoder();
+  // The default replacement token is just the Unicode replacement character
+  // U+FFFD.
+  explicit Utf8CharacterDecoder(Token replacement_token = 0xfffd);
   ~Utf8CharacterDecoder() override;
 
   Utf8CharacterDecoder(const Utf8CharacterDecoder&) = delete;
@@ -20,6 +22,8 @@ class Utf8CharacterDecoder : public CharacterDecoder {
   bool ProcessByte(uint8_t input_byte,
                    size_t* num_output_tokens,
                    Token* output_tokens) override;
+
+  Token replacement_token() const { return replacement_token_; }
 
  private:
   // Helpers for |ProcessByte()|:
@@ -30,6 +34,8 @@ class Utf8CharacterDecoder : public CharacterDecoder {
   bool ProcessContinuationByte(uint8_t input_byte,
                                size_t* num_output_tokens,
                                Token* output_tokens);
+
+  const Token replacement_token_;
 
   // Number of bytes needed for the current encoded codepoint (valid values: 0,
   // 2, 3, 4). UTF-8 uses most 4 bytes per codepoint encoding and 1 is not

@@ -20,12 +20,23 @@ group("tests") {
 
   deps = [
     ":tokenizer_test",
+    ":utf8_character_decoder_test",
   ]
 }
 
 test("tokenizer_test") {
   sources = [
     "tokenizer_unittest.cc",
+  ]
+
+  deps = [
+    ":vtlib_impl",
+  ]
+}
+
+test("utf8_character_decoder_test") {
+  sources = [
+    "utf8_character_decoder_unittest.cc",
   ]
 
   deps = [

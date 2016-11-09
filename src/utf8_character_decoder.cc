@@ -7,9 +7,14 @@
 // Notes:
 //
 // 1 byte:  0xxxxxxx                            - 7 bits
+//                                                U+0 to U+7F
 // 2 bytes: 110xxxxx 10xxxxxx                   - 6+5 = 11 bits
+//                                                U+80 to U+7FF
 // 3 bytes: 1110xxxx 10xxxxxx 10xxxxxx          - 4+6+6 = 16 bits
+//                                                U+800 to U+D7FF,
+//                                                U+E000 to U+FFFF
 // 4 bytes: 11110xxx 10xxxxxx 10xxxxxx 10xxxxxx - 3+6+6+6 = 21 bits
+//                                                U+10000 to U+10FFFF
 //
 // Overlong encodings are not allowed. This means:
 //   - 2-byte encodings: 1100000x are not valid first bytes.
@@ -36,8 +41,6 @@ static_assert(kMaxOutputTokensPerInputByte >= 4u,
 
 namespace {
 
-constexpr Token kReplacementCharacter = 0xfffd;
-
 // Returns 0 if this is a continuation byte in a UTF-8 encoding, the total
 // number of bytes (1 to 4) in the encoding if it is a valid leading byte in the
 // encoding, or "-1" otherwise (i.e., if it is 0b11111xxx).
@@ -57,7 +60,8 @@ size_t IsLeadingByte(uint8_t b) {
 
 }  // namespace
 
-Utf8CharacterDecoder::Utf8CharacterDecoder() {}
+Utf8CharacterDecoder::Utf8CharacterDecoder(Token replacement_token)
+    : replacement_token_(replacement_token) {}
 
 Utf8CharacterDecoder::~Utf8CharacterDecoder() {}
 
@@ -79,7 +83,7 @@ bool Utf8CharacterDecoder::ProcessLeadingByte(size_t n,
   // Output replacement characters for any buffered bytes.
   for (*num_output_tokens = 0u; *num_output_tokens < num_have_;
        (*num_output_tokens)++)
-    output_tokens[*num_output_tokens] = kReplacementCharacter;
+    output_tokens[*num_output_tokens] = replacement_token_;
 
   num_needed_ = 0u;
   num_have_ = 0u;
@@ -96,7 +100,7 @@ bool Utf8CharacterDecoder::ProcessLeadingByte(size_t n,
     case 2u: {
       uint8_t data = input_byte & 0x1fu;
       if (data < 0x02u) {  // Overlong encoding.
-        output_tokens[*num_output_tokens] = kReplacementCharacter;
+        output_tokens[*num_output_tokens] = replacement_token_;
         (*num_output_tokens)++;
       } else {
         num_needed_ = 2u;
@@ -113,7 +117,7 @@ bool Utf8CharacterDecoder::ProcessLeadingByte(size_t n,
     case 4u: {
       uint8_t data = input_byte & 0x07u;
       if (data >= 0x05u) {  // Invalid codepoint (greater than U+10FFFF).
-        output_tokens[*num_output_tokens] = kReplacementCharacter;
+        output_tokens[*num_output_tokens] = replacement_token_;
         (*num_output_tokens)++;
       } else {
         num_needed_ = 4u;
@@ -123,7 +127,7 @@ bool Utf8CharacterDecoder::ProcessLeadingByte(size_t n,
       return true;
     }
     case static_cast<size_t>(-1):  // Invalid byte.
-      output_tokens[*num_output_tokens] = kReplacementCharacter;
+      output_tokens[*num_output_tokens] = replacement_token_;
       (*num_output_tokens)++;
       return true;
     default:
@@ -138,7 +142,7 @@ bool Utf8CharacterDecoder::ProcessContinuationByte(uint8_t input_byte,
   uint8_t data = input_byte & 0x3fu;
   switch (num_needed_) {
     case 0u:  // Unexpected continuation.
-      output_tokens[0] = kReplacementCharacter;
+      output_tokens[0] = replacement_token_;
       *num_output_tokens = 1u;
       return true;
     case 2u:
@@ -148,8 +152,8 @@ bool Utf8CharacterDecoder::ProcessContinuationByte(uint8_t input_byte,
       if (num_have_ == 1u &&
           ((!current_value_ && data < 0x20u) ||
            (current_value_ == 0xd000u && data >= 0x20u))) {
-        output_tokens[0] = kReplacementCharacter;
-        output_tokens[1] = kReplacementCharacter;
+        output_tokens[0] = replacement_token_;
+        output_tokens[1] = replacement_token_;
         *num_output_tokens = 2u;
         num_needed_ = 0u;
         num_have_ = 0u;
@@ -161,9 +165,9 @@ bool Utf8CharacterDecoder::ProcessContinuationByte(uint8_t input_byte,
       if (num_have_ == 1u &&
           ((!current_value_ && data < 0x10u) ||
            (current_value_ >= 0x100000 && data >= 0x10u))) {
-        output_tokens[0] = kReplacementCharacter;
-        output_tokens[1] = kReplacementCharacter;
-        output_tokens[2] = kReplacementCharacter;
+        output_tokens[0] = replacement_token_;
+        output_tokens[1] = replacement_token_;
+        output_tokens[2] = replacement_token_;
         *num_output_tokens = 3u;
         num_needed_ = 0u;
         num_have_ = 0u;
@@ -188,6 +192,8 @@ bool Utf8CharacterDecoder::ProcessContinuationByte(uint8_t input_byte,
     *num_output_tokens = 1u;
     num_needed_ = 0u;
     num_have_ = 0u;
+  } else {
+    *num_output_tokens = 0u;
   }
 
   return true;
