@@ -3,6 +3,7 @@
 namespace vtlib {
 
 AsciiCharacterDecoder::AsciiCharacterDecoder() {}
+
 AsciiCharacterDecoder::~AsciiCharacterDecoder() {}
 
 bool AsciiCharacterDecoder::ProcessByte(uint8_t input_byte,
