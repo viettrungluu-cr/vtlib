@@ -33,7 +33,6 @@
 //     first bytes. If the first byte is 11110100, then 1001xxxx, 1010xxxx, and
 //     1011xxxx are not valid second bytes. (Checking these suffice.)
 
-
 namespace vtlib {
 
 static_assert(kMaxOutputTokensPerInputByte >= 4u,
@@ -167,8 +166,7 @@ bool Utf8CharacterDecoder::ProcessContinuationByte(uint8_t input_byte,
            (current_value_ >= 0x100000 && data >= 0x10u))) {
         output_tokens[0] = replacement_token_;
         output_tokens[1] = replacement_token_;
-        output_tokens[2] = replacement_token_;
-        *num_output_tokens = 3u;
+        *num_output_tokens = 2u;
         num_needed_ = 0u;
         num_have_ = 0u;
         return true;

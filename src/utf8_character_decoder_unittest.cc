@@ -104,5 +104,116 @@ TEST(Utf8CharacterDecoderTest, Valid4Byte) {
   }
 }
 
+// Tests invalid codepoints U+D800 to U+DFFF.
+TEST(Utf8CharacterDecoderTest, InvalidCodepoints1) {
+  Utf8CharacterDecoder d;
+  EXPECT_EQ(static_cast<Token>(0xfffd), d.replacement_token());
+
+  for (uint32_t c = 0xd800u; c < 0xe000u; c++) {
+    // After the first byte, we can't tell anything.
+    size_t n = static_cast<size_t>(-1);
+    Token t[kMaxOutputTokensPerInputByte];
+    EXPECT_TRUE(d.ProcessByte(static_cast<uint8_t>((c >> 12u) | 0xe0u), &n, t));
+    EXPECT_EQ(0u, n);
+
+    // After the second byte, we can already tell that it's invalid (and we
+    // should immediately emit two replacement tokens).
+    n = static_cast<size_t>(-1);
+    t[0] = 0;
+    t[1] = 0;
+    EXPECT_TRUE(d.ProcessByte(static_cast<uint8_t>(((c >> 6u) & 0x3fu) | 0x80u),
+                              &n, t));
+    EXPECT_EQ(2u, n);
+    EXPECT_EQ(d.replacement_token(), t[0]);
+    EXPECT_EQ(d.replacement_token(), t[1]);
+
+    // The third byte will also be detected as invalid (since it's an unexpected
+    // continuation byte).
+    n = static_cast<size_t>(-1);
+    t[0] = 0;
+    EXPECT_TRUE(d.ProcessByte(static_cast<uint8_t>((c & 0x3f) | 0x80u), &n, t));
+    EXPECT_EQ(1u, n);
+    EXPECT_EQ(d.replacement_token(), t[0]);
+  }
+}
+
+// Tests invalid codepoints U+110000 to U+13FFFF
+TEST(Utf8CharacterDecoderTest, InvalidCodepoints2) {
+  Utf8CharacterDecoder d;
+
+  for (uint32_t c = 0x110000u; c < 0x140000u; c++) {
+    // After the first byte, we can't tell anything.
+    size_t n = static_cast<size_t>(-1);
+    Token t[kMaxOutputTokensPerInputByte];
+    EXPECT_TRUE(d.ProcessByte(static_cast<uint8_t>((c >> 18u) | 0xf0u), &n, t));
+    EXPECT_EQ(0u, n);
+
+    // After the second byte, we can already tell that it's invalid.
+    n = static_cast<size_t>(-1);
+    t[0] = 0;
+    t[1] = 0;
+    EXPECT_TRUE(d.ProcessByte(
+        static_cast<uint8_t>(((c >> 12u) & 0x3fu) | 0x80u), &n, t));
+    EXPECT_EQ(2u, n);
+    EXPECT_EQ(d.replacement_token(), t[0]);
+    EXPECT_EQ(d.replacement_token(), t[1]);
+
+    // The remaining two bytes will also each be detected as invalid (since they
+    // are unexpected continuation bytes).
+    n = static_cast<size_t>(-1);
+    t[0] = 0;
+    EXPECT_TRUE(d.ProcessByte(static_cast<uint8_t>(((c >> 6u) & 0x3fu) | 0x80u),
+                &n, t));
+    EXPECT_EQ(1u, n);
+    EXPECT_EQ(d.replacement_token(), t[0]);
+
+    n = static_cast<size_t>(-1);
+    t[0] = 0;
+    EXPECT_TRUE(d.ProcessByte(static_cast<uint8_t>((c & 0x3f) | 0x80u), &n, t));
+    EXPECT_EQ(1u, n);
+    EXPECT_EQ(d.replacement_token(), t[0]);
+  }
+}
+
+// Tests invalid codepoints U+140000 to U+1FFFFF.
+TEST(Utf8CharacterDecoderTest, InvalidCodepoints3) {
+  Utf8CharacterDecoder d;
+
+  for (uint32_t c = 0x140000u; c < 0x200000u; c++) {
+    // After the first byte, we can already tell that it's invalid.
+    size_t n = static_cast<size_t>(-1);
+    Token t[kMaxOutputTokensPerInputByte];
+    t[0] = 0;
+    EXPECT_TRUE(d.ProcessByte(static_cast<uint8_t>((c >> 18u) | 0xf0u), &n, t));
+    EXPECT_EQ(1u, n);
+    EXPECT_EQ(d.replacement_token(), t[0]);
+
+    // The remaining three bytes will also each be detected as invalid (since
+    // they are unexpected continuation bytes).
+    n = static_cast<size_t>(-1);
+    t[0] = 0;
+    EXPECT_TRUE(d.ProcessByte(
+        static_cast<uint8_t>(((c >> 12u) & 0x3fu) | 0x80u), &n, t));
+    EXPECT_EQ(1u, n);
+    EXPECT_EQ(d.replacement_token(), t[0]);
+
+    n = static_cast<size_t>(-1);
+    t[0] = 0;
+    EXPECT_TRUE(d.ProcessByte(static_cast<uint8_t>(((c >> 6u) & 0x3fu) | 0x80u),
+                &n, t));
+    EXPECT_EQ(1u, n);
+    EXPECT_EQ(d.replacement_token(), t[0]);
+
+    n = static_cast<size_t>(-1);
+    t[0] = 0;
+    EXPECT_TRUE(d.ProcessByte(static_cast<uint8_t>((c & 0x3f) | 0x80u), &n, t));
+    EXPECT_EQ(1u, n);
+    EXPECT_EQ(d.replacement_token(), t[0]);
+  }
+}
+
+// TODO(vtl): overlong encodings, moar invalid codepoints, "interrupted"
+// encodings
+
 }  // namespace
 }  // namespace vtlib
