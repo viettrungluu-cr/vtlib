@@ -4,9 +4,18 @@
 
 namespace vtlib {
 
+enum class Terminal::State : int {
+  // Start state, processing text.
+  TEXT,
+
+};
+
 Terminal::Terminal(const Options& options)
     : options_(options),
-      tokenizer_(options.accept_8bit_C1, options.character_encoding) {
+      tokenizer_(options.accept_8bit_C1, options.character_encoding),
+      state_(State::TEXT) {
+  tokens_.reserve(10u);  // Pick a random number; 10 should be plenty.
+
 //FIXME mark the whole viewport dirty
 }
 

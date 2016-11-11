@@ -16,6 +16,8 @@ struct DisplayUpdates {
   // Bounding rectangle for the area that has changed. (This may include areas
   // that are now outside the viewport, i.e., are "offscreen".)
   Rectangle dirty;
+
+  bool needs_update() const { return bell_count || !dirty.is_empty(); }
 };
 
 }  // namespace vtlib

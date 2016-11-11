@@ -10,9 +10,6 @@
 
 namespace vtlib {
 
-//FIXME
-class DisplayUpdates;
-
 // Represesents the state of one terminal. The basic interface is that the
 // caller provides a sequence of input bytes ("characters"), and for each byte
 // the state of the terminal is updated.
@@ -46,6 +43,8 @@ class Terminal {
   void reset_display_updates() { display_updates_ = DisplayUpdates(); }
 
  private:
+  enum class State : int;
+
   // Helper for |ProcessByte()|.
   bool ProcessToken(Token token);
 
@@ -53,6 +52,8 @@ class Terminal {
   DisplayUpdates display_updates_;
 
   Tokenizer tokenizer_;
+
+  State state_;
 
   // Used by |ProcessByte()|. This is here so we don't have to re-create it each
   // time.

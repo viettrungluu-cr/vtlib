@@ -202,6 +202,7 @@ TEST(TokenizerTest, AsciiEscapeC1EscapeSequence) {
 }
 
 // TODO(vtl): Test setting accept_8bit_C1, character_decoder.
+// TODO(vtl): Test other character encodings.
 
 }  // namespace
 }  // namespace vtlib
