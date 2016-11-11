@@ -9,20 +9,17 @@ namespace {
 TEST(TokenizerTest, AsciiNonControl) {
   Tokenizer t1(false, CharacterEncoding::ASCII);
   Tokenizer t2(true, CharacterEncoding::ASCII);
-  size_t n;
-  Token o[kMaxOutputTokensPerInputByte];
+  TokenVector o;
 
   for (unsigned c = 32u; c <= 127u; c++) {
-    n = 0u;
-    o[0] = -1234;
-    t1.ProcessByte(static_cast<uint8_t>(c), &n, o);
-    EXPECT_EQ(1u, n) << c;
+    o.clear();
+    t1.ProcessByte(static_cast<uint8_t>(c), &o);
+    ASSERT_EQ(1u, o.size()) << c;
     EXPECT_EQ(c, o[0]) << c;
 
-    n = 0u;
-    o[0] = -1234;
-    t2.ProcessByte(static_cast<uint8_t>(c), &n, o);
-    EXPECT_EQ(1u, n) << c;
+    o.clear();
+    t2.ProcessByte(static_cast<uint8_t>(c), &o);
+    ASSERT_EQ(1u, o.size()) << c;
     EXPECT_EQ(c, o[0]) << c;
   }
 }
@@ -30,23 +27,20 @@ TEST(TokenizerTest, AsciiNonControl) {
 TEST(TokenizerTest, AsciiC0ControlNonEsc) {
   Tokenizer t1(false, CharacterEncoding::ASCII);
   Tokenizer t2(true, CharacterEncoding::ASCII);
-  size_t n;
-  Token o[kMaxOutputTokensPerInputByte];
+  TokenVector o;
 
   for (unsigned c = 0u; c <= 31u; c++) {
     if (c == 27u)
       continue;
 
-    n = 0u;
-    o[0] = -1234;
-    t1.ProcessByte(static_cast<uint8_t>(c), &n, o);
-    EXPECT_EQ(1u, n) << c;
+    o.clear();
+    t1.ProcessByte(static_cast<uint8_t>(c), &o);
+    ASSERT_EQ(1u, o.size()) << c;
     EXPECT_EQ(-static_cast<Token>(c), o[0]) << c;
 
-    n = 0u;
-    o[0] = -1234;
-    t2.ProcessByte(static_cast<uint8_t>(c), &n, o);
-    EXPECT_EQ(1u, n) << c;
+    o.clear();
+    t2.ProcessByte(static_cast<uint8_t>(c), &o);
+    ASSERT_EQ(1u, o.size()) << c;
     EXPECT_EQ(-static_cast<Token>(c), o[0]) << c;
   }
 }
@@ -54,35 +48,32 @@ TEST(TokenizerTest, AsciiC0ControlNonEsc) {
 TEST(TokenizerTest, AsciiInvalidNonC1Control) {
   Tokenizer t1(false, CharacterEncoding::ASCII);
   Tokenizer t2(true, CharacterEncoding::ASCII);
-  size_t n;
-  Token o[kMaxOutputTokensPerInputByte];
+  TokenVector o;
 
   for (unsigned c = 160u; c <= 255u; c++) {
-    n = 1u;
-    t1.ProcessByte(static_cast<uint8_t>(c), &n, o);
-    EXPECT_EQ(0u, n) << c;
+    o.clear();
+    t1.ProcessByte(static_cast<uint8_t>(c), &o);
+    EXPECT_EQ(0u, o.size()) << c;
 
-    n = 1u;
-    t2.ProcessByte(static_cast<uint8_t>(c), &n, o);
-    EXPECT_EQ(0u, n) << c;
+    o.clear();
+    t2.ProcessByte(static_cast<uint8_t>(c), &o);
+    EXPECT_EQ(0u, o.size()) << c;
   }
 }
 
 TEST(TokenizerTest, Ascii8bitC1Control) {
   Tokenizer t1(false, CharacterEncoding::ASCII);
   Tokenizer t2(true, CharacterEncoding::ASCII);
-  size_t n;
-  Token o[kMaxOutputTokensPerInputByte];
+  TokenVector o;
 
   for (unsigned c = 128u; c <= 159u; c++) {
-    n = 1u;
-    t1.ProcessByte(static_cast<uint8_t>(c), &n, o);
-    EXPECT_EQ(0u, n) << c;
+    o.clear();
+    t1.ProcessByte(static_cast<uint8_t>(c), &o);
+    EXPECT_EQ(0u, o.size()) << c;
 
-    n = 0u;
-    o[0] = -1234;
-    t2.ProcessByte(static_cast<uint8_t>(c), &n, o);
-    EXPECT_EQ(1u, n) << c;
+    o.clear();
+    t2.ProcessByte(static_cast<uint8_t>(c), &o);
+    ASSERT_EQ(1u, o.size()) << c;
     EXPECT_EQ(-static_cast<Token>(c), o[0]) << c;
   }
 }
@@ -90,146 +81,142 @@ TEST(TokenizerTest, Ascii8bitC1Control) {
 TEST(TokenizerTest, EscapeSequence) {
   Tokenizer t1(false, CharacterEncoding::ASCII);
   Tokenizer t2(true, CharacterEncoding::ASCII);
-  size_t n;
-  Token o[kMaxOutputTokensPerInputByte];
+  TokenVector o;
 
   for (unsigned c = 64u; c <= 95u; c++) {
-    n = 1u;
-    t1.ProcessByte(27u, &n, o);
-    EXPECT_EQ(0u, n) << c;
+    o.clear();
+    t1.ProcessByte(27u, &o);
+    EXPECT_EQ(0u, o.size()) << c;
 
-    n = 0u;
-    o[0] = -1234;
-    t1.ProcessByte(static_cast<uint8_t>(c), &n, o);
-    EXPECT_EQ(1u, n) << c;
+    o.clear();
+    t1.ProcessByte(static_cast<uint8_t>(c), &o);
+    ASSERT_EQ(1u, o.size()) << c;
     EXPECT_EQ(-static_cast<Token>(c) - 64, o[0]) << c;
 
-    n = 1u;
-    t2.ProcessByte(27u, &n, o);
-    EXPECT_EQ(0u, n) << c;
+    o.clear();
+    t2.ProcessByte(27u, &o);
+    EXPECT_EQ(0u, o.size()) << c;
 
-    n = 0u;
-    o[0] = -1234;
-    t2.ProcessByte(static_cast<uint8_t>(c), &n, o);
-    EXPECT_EQ(1u, n) << c;
+    o.clear();
+    t2.ProcessByte(static_cast<uint8_t>(c), &o);
+    ASSERT_EQ(1u, o.size()) << c;
     EXPECT_EQ(-static_cast<Token>(c) - 64, o[0]) << c;
   }
 }
 
-TEST(TokenizerTest, BadEscapeSequenceAsciiNonControl) {
+TEST(TokenizerTest, AsciiEscapeAsciiNonC0Control) {
   Tokenizer t1(false, CharacterEncoding::ASCII);
   Tokenizer t2(true, CharacterEncoding::ASCII);
-  size_t n;
-  Token o[kMaxOutputTokensPerInputByte];
+  TokenVector o;
 
   for (unsigned c = 96u; c <= 127u; c++) {
-    n = 1u;
-    t1.ProcessByte(27u, &n, o);
-    EXPECT_EQ(0u, n) << c;
+    o.clear();
+    t1.ProcessByte(27u, &o);
+    EXPECT_EQ(0u, o.size()) << c;
 
-    n = 0u;
-    o[0] = -1234;
-    t1.ProcessByte(static_cast<uint8_t>(c), &n, o);
-    EXPECT_EQ(1u, n) << c;
-    EXPECT_EQ(static_cast<Token>(c), o[0]) << c;
+    o.clear();
+    t1.ProcessByte(static_cast<uint8_t>(c), &o);
+    ASSERT_EQ(2u, o.size()) << c;
+    EXPECT_EQ(TOKEN_ESC, o[0]) << c;
+    EXPECT_EQ(static_cast<Token>(c), o[1]) << c;
 
-    n = 1u;
-    t2.ProcessByte(27u, &n, o);
-    EXPECT_EQ(0u, n) << c;
+    o.clear();
+    t2.ProcessByte(27u, &o);
+    EXPECT_EQ(0u, o.size()) << c;
 
-    n = 0u;
-    o[0] = -1234;
-    t2.ProcessByte(static_cast<uint8_t>(c), &n, o);
-    EXPECT_EQ(1u, n) << c;
-    EXPECT_EQ(static_cast<Token>(c), o[0]) << c;
+    o.clear();
+    t2.ProcessByte(static_cast<uint8_t>(c), &o);
+    ASSERT_EQ(2u, o.size()) << c;
+    EXPECT_EQ(TOKEN_ESC, o[0]) << c;
+    EXPECT_EQ(static_cast<Token>(c), o[1]) << c;
   }
 }
 
-TEST(TokenizerTest, BadEscapeSequenceAsciiInvalidNonC1Control) {
+TEST(TokenizerTest, AsciiEscapeNonAsciiNonC1Control) {
   Tokenizer t1(false, CharacterEncoding::ASCII);
   Tokenizer t2(true, CharacterEncoding::ASCII);
-  size_t n;
-  Token o[kMaxOutputTokensPerInputByte];
+  TokenVector o;
 
   for (unsigned c = 160u; c <= 255u; c++) {
-    n = 1u;
-    t1.ProcessByte(27u, &n, o);
-    EXPECT_EQ(0u, n) << c;
+    o.clear();
+    t1.ProcessByte(27u, &o);
+    EXPECT_EQ(0u, o.size()) << c;
 
-    n = 1u;
-    t1.ProcessByte(static_cast<uint8_t>(c), &n, o);
-    EXPECT_EQ(0u, n) << c;
+    o.clear();
+    t1.ProcessByte(static_cast<uint8_t>(c), &o);
+    ASSERT_EQ(1u, o.size()) << c;
+    EXPECT_EQ(TOKEN_ESC, o[0]) << c;
 
-    n = 1u;
-    t2.ProcessByte(27u, &n, o);
-    EXPECT_EQ(0u, n) << c;
+    o.clear();
+    t2.ProcessByte(27u, &o);
+    EXPECT_EQ(0u, o.size()) << c;
 
-    n = 1u;
-    t2.ProcessByte(static_cast<uint8_t>(c), &n, o);
-    EXPECT_EQ(0u, n) << c;
+    o.clear();
+    t2.ProcessByte(static_cast<uint8_t>(c), &o);
+    ASSERT_EQ(1u, o.size()) << c;
+    EXPECT_EQ(TOKEN_ESC, o[0]) << c;
   }
 }
 
-TEST(TokenizerTest, BadEscapeSequenceAscii8bitC1Control) {
+TEST(TokenizerTest, AsciiEscapeC1Control) {
   Tokenizer t1(false, CharacterEncoding::ASCII);
   Tokenizer t2(true, CharacterEncoding::ASCII);
-  size_t n;
-  Token o[kMaxOutputTokensPerInputByte];
+  TokenVector o;
 
   for (unsigned c = 128u; c <= 159u; c++) {
-    n = 1u;
-    t1.ProcessByte(27u, &n, o);
-    EXPECT_EQ(0u, n) << c;
+    o.clear();
+    t1.ProcessByte(27u, &o);
+    EXPECT_EQ(0u, o.size()) << c;
 
-    n = 1u;
-    t1.ProcessByte(static_cast<uint8_t>(c), &n, o);
-    EXPECT_EQ(0u, n) << c;
+    o.clear();
+    t1.ProcessByte(static_cast<uint8_t>(c), &o);
+    ASSERT_EQ(1u, o.size()) << c;
+    EXPECT_EQ(TOKEN_ESC, o[0]) << c;
 
-    n = 1u;
-    t2.ProcessByte(27u, &n, o);
-    EXPECT_EQ(0u, n) << c;
+    o.clear();
+    t2.ProcessByte(27u, &o);
+    EXPECT_EQ(0u, o.size()) << c;
 
-    n = 0u;
-    o[0] = -1234;
-    t2.ProcessByte(static_cast<uint8_t>(c), &n, o);
-    EXPECT_EQ(1u, n) << c;
-    EXPECT_EQ(-static_cast<Token>(c), o[0]) << c;
+    o.clear();
+    t2.ProcessByte(static_cast<uint8_t>(c), &o);
+    ASSERT_EQ(2u, o.size()) << c;
+    EXPECT_EQ(TOKEN_ESC, o[0]) << c;
+    EXPECT_EQ(-static_cast<Token>(c), o[1]) << c;
   }
 }
 
-TEST(TokenizerTest, BadEscapeSequenceEscapeSequence) {
+TEST(TokenizerTest, AsciiEscapeC1EscapeSequence) {
   Tokenizer t1(false, CharacterEncoding::ASCII);
   Tokenizer t2(true, CharacterEncoding::ASCII);
-  size_t n;
-  Token o[kMaxOutputTokensPerInputByte];
+  TokenVector o;
 
   for (unsigned c = 64u; c <= 95u; c++) {
-    n = 1u;
-    t1.ProcessByte(27u, &n, o);
-    EXPECT_EQ(0u, n) << c;
+    o.clear();
+    t1.ProcessByte(27u, &o);
+    EXPECT_EQ(0u, o.size()) << c;
 
-    n = 1u;
-    t1.ProcessByte(27u, &n, o);
-    EXPECT_EQ(0u, n) << c;
+    o.clear();
+    t1.ProcessByte(27u, &o);
+    ASSERT_EQ(1u, o.size()) << c;
+    EXPECT_EQ(TOKEN_ESC, o[0]) << c;
 
-    n = 0u;
-    o[0] = -1234;
-    t1.ProcessByte(static_cast<uint8_t>(c), &n, o);
-    EXPECT_EQ(1u, n) << c;
+    o.clear();
+    t1.ProcessByte(static_cast<uint8_t>(c), &o);
+    ASSERT_EQ(1u, o.size()) << c;
     EXPECT_EQ(-static_cast<Token>(c) - 64, o[0]) << c;
 
-    n = 1u;
-    t2.ProcessByte(27u, &n, o);
-    EXPECT_EQ(0u, n) << c;
+    o.clear();
+    t2.ProcessByte(27u, &o);
+    EXPECT_EQ(0u, o.size()) << c;
 
-    n = 1u;
-    t2.ProcessByte(27u, &n, o);
-    EXPECT_EQ(0u, n) << c;
+    o.clear();
+    t2.ProcessByte(27u, &o);
+    ASSERT_EQ(1u, o.size()) << c;
+    EXPECT_EQ(TOKEN_ESC, o[0]) << c;
 
-    n = 0u;
-    o[0] = -1234;
-    t2.ProcessByte(static_cast<uint8_t>(c), &n, o);
-    EXPECT_EQ(1u, n) << c;
+    o.clear();
+    t2.ProcessByte(static_cast<uint8_t>(c), &o);
+    ASSERT_EQ(1u, o.size()) << c;
     EXPECT_EQ(-static_cast<Token>(c) - 64, o[0]) << c;
   }
 }

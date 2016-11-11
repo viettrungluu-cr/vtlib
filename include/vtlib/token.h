@@ -3,6 +3,8 @@
 
 #include <stdint.h>
 
+#include <vector>
+
 namespace vtlib {
 
 // Tokens represent either Unicode codepoints (as non-negative values) or
@@ -10,6 +12,8 @@ namespace vtlib {
 // but we can tolerate this.) Control codes are encoded as minus their C0 or
 // (8-bit) C1 byte value.
 using Token = int32_t;
+
+using TokenVector = std::vector<Token>;
 
 // Names for the control code tokens.
 enum TokenNames : Token {

@@ -53,9 +53,7 @@ class Utf8CharacterDecoder : public CharacterDecoder {
   Utf8CharacterDecoder(const Utf8CharacterDecoder&) = delete;
   Utf8CharacterDecoder& operator=(const Utf8CharacterDecoder&) = delete;
 
-  bool ProcessByte(uint8_t input_byte,
-                   size_t* num_output_tokens,
-                   Token* output_tokens) override;
+  bool ProcessByte(uint8_t input_byte, TokenVector* output_tokens) override;
 
   Token replacement_token() const { return replacement_token_; }
 
@@ -63,11 +61,8 @@ class Utf8CharacterDecoder : public CharacterDecoder {
   // Helpers for |ProcessByte()|:
   bool ProcessLeadingByte(size_t n,
                           uint8_t input_byte,
-                          size_t* num_output_tokens,
-                          Token* output_tokens);
-  bool ProcessContinuationByte(uint8_t input_byte,
-                               size_t* num_output_tokens,
-                               Token* output_tokens);
+                          TokenVector* output_tokens);
+  bool ProcessContinuationByte(uint8_t input_byte, TokenVector* output_tokens);
 
   const Token replacement_token_;
 

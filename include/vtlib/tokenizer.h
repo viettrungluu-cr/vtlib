@@ -62,13 +62,9 @@ class Tokenizer {
   Tokenizer(const Tokenizer&) = delete;
   Tokenizer& operator=(const Tokenizer&) = delete;
 
-  // Processes the input byte |input_byte|; |output_tokens| should point to a
-  // buffer with space for at least |kMaxOutputTokensPerInputByte| tokens.
-  // |*num_output_tokens| will be set to number of output tokens produced and
-  // provided in |output_tokens[...]|.
-  void ProcessByte(uint8_t input_byte,
-                   size_t* num_output_tokens,
-                   Token* output_tokens);
+  // Processes the input byte |input_byte|; output tokens will be *appended* to
+  // |*output_tokens|.
+  void ProcessByte(uint8_t input_byte, TokenVector* output_tokens);
 
   bool accept_8bit_C1() const { return accept_8bit_C1_; }
   void set_accept_8bit_C1(bool accept_8bit_C1) {

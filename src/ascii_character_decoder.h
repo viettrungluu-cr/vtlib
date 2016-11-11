@@ -14,9 +14,7 @@ class AsciiCharacterDecoder : public CharacterDecoder {
   AsciiCharacterDecoder(const AsciiCharacterDecoder&) = delete;
   AsciiCharacterDecoder& operator=(const AsciiCharacterDecoder&) = delete;
 
-  bool ProcessByte(uint8_t input_byte,
-                   size_t* num_output_tokens,
-                   Token* output_tokens) override;
+  bool ProcessByte(uint8_t input_byte, TokenVector* output_tokens) override;
 };
 
 }  // namespace vtlib

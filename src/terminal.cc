@@ -11,13 +11,15 @@ Terminal::Terminal(const Options& options)
 Terminal::~Terminal() = default;
 
 bool Terminal::ProcessByte(uint8_t input_byte) {
-  size_t num_tokens = 0u;
-  Token tokens[kMaxOutputTokensPerInputByte];
-  tokenizer_.ProcessByte(input_byte, &num_tokens, tokens);
+//FIXME don't re-create this vector on every byte
+  TokenVector tokens;
+
+  tokens.clear();
+  tokenizer_.ProcessByte(input_byte, &tokens);
 
   bool have_state_changes = false;
-  for (size_t i = 0u; i < num_tokens; i++)
-    have_state_changes |= ProcessToken(tokens[i]);
+  for (auto token : tokens)
+    have_state_changes |= ProcessToken(token);
   return have_state_changes;
 }
 

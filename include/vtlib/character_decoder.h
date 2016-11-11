@@ -11,8 +11,6 @@
 
 namespace vtlib {
 
-constexpr size_t kMaxOutputTokensPerInputByte = 4u;
-
 class CharacterDecoder {
  public:
   virtual ~CharacterDecoder() = default;
@@ -22,15 +20,11 @@ class CharacterDecoder {
   static std::unique_ptr<CharacterDecoder> Create(
       CharacterEncoding character_encoding);
 
-  // |input_byte| is the input byte to be processed. |output tokens| should
-  // point to a buffer with space for at least |kMaxOutputTokensPerInputByte|
-  // tokens.
+  // |input_byte| is the input byte to be processed.
   //
   // Returns true if the byte was "accepted" or false if it was not, and should
-  // possibly be processed as (e.g.) a control code. |*num_output_tokens| will
-  // be set to the number of output tokens produced, and |output_tokens[0]|,
-  // ..., |output_tokens[*num_output_tokens-1]| will be set to those output
-  // tokens.
+  // possibly be processed as (e.g.) a control code. The output tokens will be
+  // *appended* to |*output_tokens|.
   //
   // Note that even if the byte was not accepted (i.e., the return value is
   // false), output tokens may still be produced. E.g., if the decoder was in
@@ -43,9 +37,7 @@ class CharacterDecoder {
   // control codes), except possibly when there was previous input (i.e., as a
   // non-first byte in a multibyte sequence). This *may* accept input bytes in
   // the range 128..159 (i.e., C1 control codes).
-  virtual bool ProcessByte(uint8_t input_byte,
-                           size_t* num_output_tokens,
-                           Token* output_tokens) = 0;
+  virtual bool ProcessByte(uint8_t input_byte, TokenVector* output_tokens) = 0;
 
   // Static helper functions to determine whether a given byte is a control
   // code.

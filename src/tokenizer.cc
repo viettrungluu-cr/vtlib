@@ -20,23 +20,19 @@ Tokenizer::Tokenizer(bool accept_8bit_C1,
 
 Tokenizer::~Tokenizer() = default;
 
-void Tokenizer::ProcessByte(uint8_t input_byte,
-                            size_t* num_output_tokens,
-                            Token* output_tokens) {
+void Tokenizer::ProcessByte(uint8_t input_byte, TokenVector* output_tokens) {
   if (got_ESC_) {
     got_ESC_ = false;
+    // If it's a C1 escape sequence, we just transform it into a C1 token.
     if (input_byte >= 64u && input_byte <= 95u) {
-      output_tokens[0] = -static_cast<Token>(input_byte) - 64;
-      (*num_output_tokens) = 1u;
+      output_tokens->push_back(-static_cast<Token>(input_byte) - 64);
       return;
     }
-//FIXME
-    // On an invalid escape sequence ESC c, will just drop the ESC and start
-    // anew with c.
+    // Otherwise, we just emit an ESC token, and process the character as usual.
+    output_tokens->push_back(TOKEN_ESC);
   }
 
-  if (character_decoder_->ProcessByte(input_byte, num_output_tokens,
-                                      output_tokens))
+  if (character_decoder_->ProcessByte(input_byte, output_tokens))
     return;
 
   if (CharacterDecoder::is_control_code(input_byte)) {
@@ -49,9 +45,7 @@ void Tokenizer::ProcessByte(uint8_t input_byte,
 
     if (CharacterDecoder::is_C0_control_code(input_byte) ||
         (accept_8bit_C1_ && CharacterDecoder::is_C1_control_code(input_byte))) {
-      assert(*num_output_tokens < kMaxOutputTokensPerInputByte);
-      output_tokens[*num_output_tokens] = -static_cast<Token>(input_byte);
-      (*num_output_tokens)++;
+      output_tokens->push_back(-static_cast<Token>(input_byte));
       return;
     }
   }

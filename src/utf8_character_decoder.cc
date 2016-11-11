@@ -34,10 +34,6 @@
 //     1011xxxx are not valid second bytes. (Checking these suffice.)
 
 namespace vtlib {
-
-static_assert(kMaxOutputTokensPerInputByte >= 4u,
-              "kMaxOutputTokensPerInputByte too small for UTF-8");
-
 namespace {
 
 // Returns 0 if this is a continuation byte in a UTF-8 encoding, the total
@@ -65,24 +61,21 @@ Utf8CharacterDecoder::Utf8CharacterDecoder(Token replacement_token)
 Utf8CharacterDecoder::~Utf8CharacterDecoder() = default;
 
 bool Utf8CharacterDecoder::ProcessByte(uint8_t input_byte,
-                                       size_t* num_output_tokens,
-                                       Token* output_tokens) {
+                                       TokenVector* output_tokens) {
   // Regardless, if we see a leading byte, we resynchronize.
   if (size_t n = IsLeadingByte(input_byte))
-    return ProcessLeadingByte(n, input_byte, num_output_tokens, output_tokens);
-  return ProcessContinuationByte(input_byte, num_output_tokens, output_tokens);
+    return ProcessLeadingByte(n, input_byte, output_tokens);
+  return ProcessContinuationByte(input_byte, output_tokens);
 }
 
 bool Utf8CharacterDecoder::ProcessLeadingByte(size_t n,
                                               uint8_t input_byte,
-                                              size_t* num_output_tokens,
-                                              Token* output_tokens) {
+                                              TokenVector* output_tokens) {
   // If we see a leading byte, we resynchronize.
 
   // Output replacement characters for any buffered bytes.
-  for (*num_output_tokens = 0u; *num_output_tokens < num_have_;
-       (*num_output_tokens)++)
-    output_tokens[*num_output_tokens] = replacement_token_;
+  for (size_t i = 0u; i < num_have_; i++)
+    output_tokens->push_back(replacement_token_);
 
   num_needed_ = 0u;
   num_have_ = 0u;
@@ -93,14 +86,12 @@ bool Utf8CharacterDecoder::ProcessLeadingByte(size_t n,
       if (is_C0_control_code(input_byte))
         return false;
       // Output a token.
-      output_tokens[*num_output_tokens] = static_cast<Token>(input_byte);
-      (*num_output_tokens)++;
+      output_tokens->push_back(static_cast<Token>(input_byte));
       return true;
     case 2u: {
       uint8_t data = input_byte & 0x1fu;
       if (data < 0x02u) {  // Overlong encoding.
-        output_tokens[*num_output_tokens] = replacement_token_;
-        (*num_output_tokens)++;
+        output_tokens->push_back(replacement_token_);
       } else {
         num_needed_ = 2u;
         num_have_ = 1u;
@@ -116,8 +107,7 @@ bool Utf8CharacterDecoder::ProcessLeadingByte(size_t n,
     case 4u: {
       uint8_t data = input_byte & 0x07u;
       if (data >= 0x05u) {  // Invalid codepoint (greater than U+10FFFF).
-        output_tokens[*num_output_tokens] = replacement_token_;
-        (*num_output_tokens)++;
+        output_tokens->push_back(replacement_token_);
       } else {
         num_needed_ = 4u;
         num_have_ = 1u;
@@ -126,8 +116,7 @@ bool Utf8CharacterDecoder::ProcessLeadingByte(size_t n,
       return true;
     }
     case static_cast<size_t>(-1):  // Invalid byte.
-      output_tokens[*num_output_tokens] = replacement_token_;
-      (*num_output_tokens)++;
+      output_tokens->push_back(replacement_token_);
       return true;
     default:
       assert(false);
@@ -136,13 +125,11 @@ bool Utf8CharacterDecoder::ProcessLeadingByte(size_t n,
 }
 
 bool Utf8CharacterDecoder::ProcessContinuationByte(uint8_t input_byte,
-                                                   size_t* num_output_tokens,
-                                                   Token* output_tokens) {
+                                                   TokenVector* output_tokens) {
   uint8_t data = input_byte & 0x3fu;
   switch (num_needed_) {
     case 0u:  // Unexpected continuation.
-      output_tokens[0] = replacement_token_;
-      *num_output_tokens = 1u;
+      output_tokens->push_back(replacement_token_);
       return true;
     case 2u:
       break;
@@ -151,9 +138,8 @@ bool Utf8CharacterDecoder::ProcessContinuationByte(uint8_t input_byte,
       if (num_have_ == 1u &&
           ((!current_value_ && data < 0x20u) ||
            (current_value_ == 0xd000u && data >= 0x20u))) {
-        output_tokens[0] = replacement_token_;
-        output_tokens[1] = replacement_token_;
-        *num_output_tokens = 2u;
+        output_tokens->push_back(replacement_token_);
+        output_tokens->push_back(replacement_token_);
         num_needed_ = 0u;
         num_have_ = 0u;
         return true;
@@ -164,9 +150,8 @@ bool Utf8CharacterDecoder::ProcessContinuationByte(uint8_t input_byte,
       if (num_have_ == 1u &&
           ((!current_value_ && data < 0x10u) ||
            (current_value_ >= 0x100000 && data >= 0x10u))) {
-        output_tokens[0] = replacement_token_;
-        output_tokens[1] = replacement_token_;
-        *num_output_tokens = 2u;
+        output_tokens->push_back(replacement_token_);
+        output_tokens->push_back(replacement_token_);
         num_needed_ = 0u;
         num_have_ = 0u;
         return true;
@@ -186,12 +171,9 @@ bool Utf8CharacterDecoder::ProcessContinuationByte(uint8_t input_byte,
   if (num_have_ == num_needed_) {
     assert(!(current_value_ >= 0xd800 && current_value_ <= 0xdfff));
     assert(current_value_ <= 0x10ffff);
-    output_tokens[0] = current_value_;
-    *num_output_tokens = 1u;
+    output_tokens->push_back(current_value_);
     num_needed_ = 0u;
     num_have_ = 0u;
-  } else {
-    *num_output_tokens = 0u;
   }
 
   return true;
