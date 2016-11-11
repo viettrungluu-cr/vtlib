@@ -19,7 +19,7 @@ TEST(Utf8CharacterDecoderTest, Valid1ByteC0) {
   for (uint8_t c = 0u; c < 0x20u; c++) {
     t.clear();
     EXPECT_FALSE(d.ProcessByte(c, &t));
-    EXPECT_EQ(0u, t.size());
+    EXPECT_EQ(TokenVector(), t) << c;
   }
 }
 
@@ -30,8 +30,7 @@ TEST(Utf8CharacterDecoderTest, Valid1ByteNonC0) {
   for (uint8_t c = 0x20u; c < 0x80u; c++) {
     t.clear();
     EXPECT_TRUE(d.ProcessByte(c, &t));
-    ASSERT_EQ(1u, t.size());
-    EXPECT_EQ(static_cast<Token>(c), t[0]);
+    EXPECT_EQ(TokenVector({static_cast<Token>(c)}), t) << c;
   }
 }
 
@@ -44,12 +43,11 @@ TEST(Utf8CharacterDecoderTest, Valid2Byte) {
   for (uint32_t c = 0x80u; c < 0x800u; c++) {
     t.clear();
     EXPECT_TRUE(d.ProcessByte(static_cast<uint8_t>((c >> 6u) | 0xc0u), &t));
-    EXPECT_EQ(0u, t.size());
+    EXPECT_EQ(TokenVector(), t) << c;
 
     t.clear();
     EXPECT_TRUE(d.ProcessByte(static_cast<uint8_t>((c & 0x3f) | 0x80u), &t));
-    ASSERT_EQ(1u, t.size());
-    EXPECT_EQ(static_cast<Token>(c), t[0]);
+    EXPECT_EQ(TokenVector({static_cast<Token>(c)}), t) << c;
   }
 }
 
@@ -66,17 +64,16 @@ TEST(Utf8CharacterDecoderTest, Valid3Byte) {
 
     t.clear();
     EXPECT_TRUE(d.ProcessByte(static_cast<uint8_t>((c >> 12u) | 0xe0u), &t));
-    EXPECT_EQ(0u, t.size());
+    EXPECT_EQ(TokenVector(), t) << c;
 
     t.clear();
     EXPECT_TRUE(d.ProcessByte(static_cast<uint8_t>(((c >> 6u) & 0x3fu) | 0x80u),
                               &t));
-    EXPECT_EQ(0u, t.size());
+    EXPECT_EQ(TokenVector(), t) << c;
 
     t.clear();
     EXPECT_TRUE(d.ProcessByte(static_cast<uint8_t>((c & 0x3f) | 0x80u), &t));
-    ASSERT_EQ(1u, t.size());
-    EXPECT_EQ(static_cast<Token>(c), t[0]);
+    EXPECT_EQ(TokenVector({static_cast<Token>(c)}), t) << c;
   }
 }
 
@@ -89,22 +86,21 @@ TEST(Utf8CharacterDecoderTest, Valid4Byte) {
   for (uint32_t c = 0x10000u; c < 0x110000u; c++) {
     t.clear();
     EXPECT_TRUE(d.ProcessByte(static_cast<uint8_t>((c >> 18u) | 0xf0u), &t));
-    EXPECT_EQ(0u, t.size());
+    EXPECT_EQ(TokenVector(), t) << c;
 
     t.clear();
     EXPECT_TRUE(d.ProcessByte(
         static_cast<uint8_t>(((c >> 12u) & 0x3fu) | 0x80u), &t));
-    EXPECT_EQ(0u, t.size());
+    EXPECT_EQ(TokenVector(), t) << c;
 
     t.clear();
     EXPECT_TRUE(d.ProcessByte(static_cast<uint8_t>(((c >> 6u) & 0x3fu) | 0x80u),
                 &t));
-    EXPECT_EQ(0u, t.size());
+    EXPECT_EQ(TokenVector(), t) << c;
 
     t.clear();
     EXPECT_TRUE(d.ProcessByte(static_cast<uint8_t>((c & 0x3f) | 0x80u), &t));
-    ASSERT_EQ(1u, t.size());
-    EXPECT_EQ(static_cast<Token>(c), t[0]);
+    EXPECT_EQ(TokenVector({static_cast<Token>(c)}), t) << c;
   }
 }
 
@@ -118,23 +114,20 @@ TEST(Utf8CharacterDecoderTest, InvalidCodepoints1) {
     // After the first byte, we can't tell anything.
     t.clear();
     EXPECT_TRUE(d.ProcessByte(static_cast<uint8_t>((c >> 12u) | 0xe0u), &t));
-    EXPECT_EQ(0u, t.size());
+    EXPECT_EQ(TokenVector(), t) << c;
 
     // After the second byte, we can already tell that it's invalid (and we
     // should immediately emit two replacement tokens).
     t.clear();
     EXPECT_TRUE(d.ProcessByte(static_cast<uint8_t>(((c >> 6u) & 0x3fu) | 0x80u),
                               &t));
-    EXPECT_EQ(2u, t.size());
-    EXPECT_EQ(d.replacement_token(), t[0]);
-    EXPECT_EQ(d.replacement_token(), t[1]);
+    EXPECT_EQ(TokenVector({0xfffd, 0xfffd}), t) << c;
 
     // The third byte will also be detected as invalid (since it's an unexpected
     // continuation byte).
     t.clear();
     EXPECT_TRUE(d.ProcessByte(static_cast<uint8_t>((c & 0x3f) | 0x80u), &t));
-    ASSERT_EQ(1u, t.size());
-    EXPECT_EQ(d.replacement_token(), t[0]);
+    EXPECT_EQ(TokenVector({0xfffd}), t) << c;
   }
 }
 
@@ -142,33 +135,30 @@ TEST(Utf8CharacterDecoderTest, InvalidCodepoints1) {
 TEST(Utf8CharacterDecoderTest, InvalidCodepoints2) {
   Utf8CharacterDecoder d;
   TokenVector t;
+  EXPECT_EQ(static_cast<Token>(0xfffd), d.replacement_token());
 
   for (uint32_t c = 0x110000u; c < 0x140000u; c++) {
     // After the first byte, we can't tell anything.
     t.clear();
     EXPECT_TRUE(d.ProcessByte(static_cast<uint8_t>((c >> 18u) | 0xf0u), &t));
-    EXPECT_EQ(0u, t.size());
+    EXPECT_EQ(TokenVector(), t) << c;
 
     // After the second byte, we can already tell that it's invalid.
     t.clear();
     EXPECT_TRUE(d.ProcessByte(
         static_cast<uint8_t>(((c >> 12u) & 0x3fu) | 0x80u), &t));
-    EXPECT_EQ(2u, t.size());
-    EXPECT_EQ(d.replacement_token(), t[0]);
-    EXPECT_EQ(d.replacement_token(), t[1]);
+    EXPECT_EQ(TokenVector({0xfffd, 0xfffd}), t) << c;
 
     // The remaining two bytes will also each be detected as invalid (since they
     // are unexpected continuation bytes).
     t.clear();
     EXPECT_TRUE(d.ProcessByte(static_cast<uint8_t>(((c >> 6u) & 0x3fu) | 0x80u),
                 &t));
-    ASSERT_EQ(1u, t.size());
-    EXPECT_EQ(d.replacement_token(), t[0]);
+    EXPECT_EQ(TokenVector({0xfffd}), t) << c;
 
     t.clear();
     EXPECT_TRUE(d.ProcessByte(static_cast<uint8_t>((c & 0x3f) | 0x80u), &t));
-    ASSERT_EQ(1u, t.size());
-    EXPECT_EQ(d.replacement_token(), t[0]);
+    EXPECT_EQ(TokenVector({0xfffd}), t) << c;
   }
 }
 
@@ -176,106 +166,97 @@ TEST(Utf8CharacterDecoderTest, InvalidCodepoints2) {
 TEST(Utf8CharacterDecoderTest, InvalidCodepoints3) {
   Utf8CharacterDecoder d;
   TokenVector t;
+  EXPECT_EQ(static_cast<Token>(0xfffd), d.replacement_token());
 
   for (uint32_t c = 0x140000u; c < 0x200000u; c++) {
     // After the first byte, we can already tell that it's invalid.
     t.clear();
     EXPECT_TRUE(d.ProcessByte(static_cast<uint8_t>((c >> 18u) | 0xf0u), &t));
-    ASSERT_EQ(1u, t.size());
-    EXPECT_EQ(d.replacement_token(), t[0]);
+    EXPECT_EQ(TokenVector({0xfffd}), t) << c;
 
     // The remaining three bytes will also each be detected as invalid (since
     // they are unexpected continuation bytes).
     t.clear();
     EXPECT_TRUE(d.ProcessByte(
         static_cast<uint8_t>(((c >> 12u) & 0x3fu) | 0x80u), &t));
-    ASSERT_EQ(1u, t.size());
-    EXPECT_EQ(d.replacement_token(), t[0]);
+    EXPECT_EQ(TokenVector({0xfffd}), t) << c;
 
     t.clear();
     EXPECT_TRUE(d.ProcessByte(static_cast<uint8_t>(((c >> 6u) & 0x3fu) | 0x80u),
                 &t));
-    ASSERT_EQ(1u, t.size());
-    EXPECT_EQ(d.replacement_token(), t[0]);
+    EXPECT_EQ(TokenVector({0xfffd}), t) << c;
 
     t.clear();
     EXPECT_TRUE(d.ProcessByte(static_cast<uint8_t>((c & 0x3f) | 0x80u), &t));
-    ASSERT_EQ(1u, t.size());
-    EXPECT_EQ(d.replacement_token(), t[0]);
+    EXPECT_EQ(TokenVector({0xfffd}), t) << c;
   }
 }
 
 TEST(Utf8CharacterDecoderTest, Overlong2Byte) {
   Utf8CharacterDecoder d;
   TokenVector t;
+  EXPECT_EQ(static_cast<Token>(0xfffd), d.replacement_token());
 
   for (uint32_t c = 0u; c < 0x80u; c++) {
     // After the first byte, we can already tell that it's invalid.
     t.clear();
     EXPECT_TRUE(d.ProcessByte(static_cast<uint8_t>((c >> 6u) | 0xc0u), &t));
-    ASSERT_EQ(1u, t.size());
-    EXPECT_EQ(d.replacement_token(), t[0]);
+    EXPECT_EQ(TokenVector({0xfffd}), t) << c;
 
     t.clear();
     EXPECT_TRUE(d.ProcessByte(static_cast<uint8_t>((c & 0x3f) | 0x80u), &t));
-    ASSERT_EQ(1u, t.size());
-    EXPECT_EQ(d.replacement_token(), t[0]);
+    EXPECT_EQ(TokenVector({0xfffd}), t) << c;
   }
 }
 
 TEST(Utf8CharacterDecoderTest, Overlong3Byte) {
   Utf8CharacterDecoder d;
   TokenVector t;
+  EXPECT_EQ(static_cast<Token>(0xfffd), d.replacement_token());
 
   for (uint32_t c = 0u; c < 0x800u; c++) {
     // After the first byte, we can't tell anything.
     t.clear();
     EXPECT_TRUE(d.ProcessByte(static_cast<uint8_t>((c >> 12u) | 0xe0u), &t));
-    EXPECT_EQ(0u, t.size());
+    EXPECT_EQ(TokenVector(), t) << c;
 
     // After the second byte, we can already tell that it's invalid.
     t.clear();
     EXPECT_TRUE(d.ProcessByte(static_cast<uint8_t>(((c >> 6u) & 0x3fu) | 0x80u),
                               &t));
-    EXPECT_EQ(2u, t.size());
-    EXPECT_EQ(d.replacement_token(), t[0]);
-    EXPECT_EQ(d.replacement_token(), t[1]);
+    EXPECT_EQ(TokenVector({0xfffd, 0xfffd}), t) << c;
 
     t.clear();
     EXPECT_TRUE(d.ProcessByte(static_cast<uint8_t>((c & 0x3f) | 0x80u), &t));
-    ASSERT_EQ(1u, t.size());
-    EXPECT_EQ(d.replacement_token(), t[0]);
+    EXPECT_EQ(TokenVector({0xfffd}), t) << c;
   }
 }
 
 TEST(Utf8CharacterDecoderTest, Overlong4Byte) {
   Utf8CharacterDecoder d;
   TokenVector t;
+  EXPECT_EQ(static_cast<Token>(0xfffd), d.replacement_token());
 
   for (uint32_t c = 0u; c < 0x10000u; c++) {
     // After the first byte, we can't tell anything.
     t.clear();
     EXPECT_TRUE(d.ProcessByte(static_cast<uint8_t>((c >> 18u) | 0xf0u), &t));
-    EXPECT_EQ(0u, t.size());
+    EXPECT_EQ(TokenVector(), t) << c;
 
     // After the second byte, we can already tell that it's invalid.
     t.clear();
     EXPECT_TRUE(d.ProcessByte(
         static_cast<uint8_t>(((c >> 12u) & 0x3fu) | 0x80u), &t));
-    EXPECT_EQ(2u, t.size());
-    EXPECT_EQ(d.replacement_token(), t[0]);
-    EXPECT_EQ(d.replacement_token(), t[1]);
+    EXPECT_EQ(TokenVector({0xfffd, 0xfffd}), t) << c;
 
     t.clear();
     EXPECT_TRUE(d.ProcessByte(static_cast<uint8_t>(((c >> 6u) & 0x3fu) | 0x80u),
                 &t));
-    ASSERT_EQ(1u, t.size());
-    EXPECT_EQ(d.replacement_token(), t[0]);
+    EXPECT_EQ(TokenVector({0xfffd}), t) << c;
 
     t.clear();
     EXPECT_TRUE(d.ProcessByte(static_cast<uint8_t>((c & 0x3f) | 0x80u), &t));
-    ASSERT_EQ(1u, t.size());
-    EXPECT_EQ(d.replacement_token(), t[0]);
+    EXPECT_EQ(TokenVector({0xfffd}), t) << c;
   }
 }
 
@@ -296,7 +277,6 @@ void RunTestSequence(Utf8CharacterDecoder* d, TestSequence seq) {
   for (const auto& step : seq) {
     t.clear();
     EXPECT_EQ(step.accept, d->ProcessByte(step.input, &t)) << i;
-    ASSERT_EQ(step.output.size(), t.size()) << i;
     EXPECT_EQ(step.output, t) << i;
     i++;
   }
