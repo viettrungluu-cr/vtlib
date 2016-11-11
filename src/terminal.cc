@@ -1,5 +1,7 @@
 #include <vtlib/terminal.h>
 
+#include <assert.h>
+
 namespace vtlib {
 
 Terminal::Terminal(const Options& options)
@@ -11,15 +13,13 @@ Terminal::Terminal(const Options& options)
 Terminal::~Terminal() = default;
 
 bool Terminal::ProcessByte(uint8_t input_byte) {
-//FIXME don't re-create this vector on every byte
-  TokenVector tokens;
-
-  tokens.clear();
-  tokenizer_.ProcessByte(input_byte, &tokens);
+  assert(tokens_.empty());
+  tokenizer_.ProcessByte(input_byte, &tokens_);
 
   bool have_state_changes = false;
-  for (auto token : tokens)
+  for (auto token : tokens_)
     have_state_changes |= ProcessToken(token);
+  tokens_.clear();
   return have_state_changes;
 }
 

@@ -53,6 +53,10 @@ class Terminal {
   StateChanges state_changes_;
 
   Tokenizer tokenizer_;
+
+  // Used by |ProcessByte()|. This is here so we don't have to re-create it each
+  // time.
+  TokenVector tokens_;
 };
 
 }  // namespace vtlib
