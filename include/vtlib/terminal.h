@@ -18,6 +18,8 @@ class Terminal {
  public:
   struct Options {
 //FIXME much moar
+
+    // These can also be changed via escape sequences:
     bool accept_8bit_C1;
     CharacterEncoding character_encoding;
   };
@@ -43,8 +45,6 @@ class Terminal {
   void reset_display_updates() { display_updates_ = DisplayUpdates(); }
 
  private:
-  enum class State : int;
-
   // Helper for |ProcessByte()|.
   bool ProcessToken(Token token);
 
@@ -52,8 +52,6 @@ class Terminal {
   DisplayUpdates display_updates_;
 
   Tokenizer tokenizer_;
-
-  State state_;
 
   // Used by |ProcessByte()|. This is here so we don't have to re-create it each
   // time.

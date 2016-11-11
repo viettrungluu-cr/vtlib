@@ -4,12 +4,6 @@
 
 namespace vtlib {
 
-enum class Terminal::State : int {
-  // Start state, processing text.
-  TEXT,
-
-};
-
 Terminal::Terminal(const Options& options)
     : options_(options),
       tokenizer_(options.accept_8bit_C1, options.character_encoding),
@@ -33,6 +27,7 @@ bool Terminal::ProcessByte(uint8_t input_byte) {
 }
 
 bool Terminal::ProcessToken(Token token) {
+//FIXME
   return false;
 }
 
