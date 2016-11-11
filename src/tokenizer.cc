@@ -14,8 +14,7 @@ Tokenizer::Tokenizer(bool accept_8bit_C1,
   assert(character_decoder_);
 }
 
-Tokenizer::Tokenizer(bool accept_8bit_C1,
-                     CharacterEncoding character_encoding)
+Tokenizer::Tokenizer(bool accept_8bit_C1, CharacterEncoding character_encoding)
     : Tokenizer(accept_8bit_C1, CharacterDecoder::Create(character_encoding)) {}
 
 Tokenizer::~Tokenizer() = default;

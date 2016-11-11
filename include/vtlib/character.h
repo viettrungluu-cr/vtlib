@@ -52,8 +52,8 @@ class Character {
   }
 
   void set_attribute(Attribute attribute) {
-    assert(!(static_cast<uint32_t>(attribute) &
-             ~static_cast<uint32_t>(0x7ffu)));
+    assert(
+        !(static_cast<uint32_t>(attribute) & ~static_cast<uint32_t>(0x7ffu)));
     character_ = (character_ & static_cast<uint32_t>(0x001fffffu)) |
                  (static_cast<uint32_t>(attribute) << 21u);
   }
@@ -64,8 +64,8 @@ class Character {
   }
 
   void set(Attribute attribute, uint32_t codepoint) {
-    assert(!(static_cast<uint32_t>(attribute) &
-             ~static_cast<uint32_t>(0x7ffu)));
+    assert(
+        !(static_cast<uint32_t>(attribute) & ~static_cast<uint32_t>(0x7ffu)));
     assert(codepoint <= 0x10ffffu);
     character_ = (static_cast<uint32_t>(attribute) << 21u) | codepoint;
   }

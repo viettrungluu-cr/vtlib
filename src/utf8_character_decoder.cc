@@ -135,9 +135,8 @@ bool Utf8CharacterDecoder::ProcessContinuationByte(uint8_t input_byte,
       break;
     case 3u:
       // Overlong encoding or invalid codepoint (U+D800 to U+DFFF).
-      if (num_have_ == 1u &&
-          ((!current_value_ && data < 0x20u) ||
-           (current_value_ == 0xd000u && data >= 0x20u))) {
+      if (num_have_ == 1u && ((!current_value_ && data < 0x20u) ||
+                              (current_value_ == 0xd000u && data >= 0x20u))) {
         output_tokens->push_back(replacement_token_);
         output_tokens->push_back(replacement_token_);
         num_needed_ = 0u;
@@ -147,9 +146,8 @@ bool Utf8CharacterDecoder::ProcessContinuationByte(uint8_t input_byte,
       break;
     case 4u:
       // Overlong encoding or invalid codepoint (greater than U+10FFFF).
-      if (num_have_ == 1u &&
-          ((!current_value_ && data < 0x10u) ||
-           (current_value_ >= 0x100000 && data >= 0x10u))) {
+      if (num_have_ == 1u && ((!current_value_ && data < 0x10u) ||
+                              (current_value_ >= 0x100000 && data >= 0x10u))) {
         output_tokens->push_back(replacement_token_);
         output_tokens->push_back(replacement_token_);
         num_needed_ = 0u;

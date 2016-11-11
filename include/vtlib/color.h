@@ -49,9 +49,7 @@ class Color {
   //         colors
   //   - |Type::RGB|: encoding a 256x256x256 RGB cube (0xrrbbgg, where rr, gg,
   //     bb are 0x00..0xff)
-  uint32_t data() const {
-    return color_ & static_cast<uint32_t>(0x00ffffffu);
-  }
+  uint32_t data() const { return color_ & static_cast<uint32_t>(0x00ffffffu); }
 
   void set(Type type, uint32_t data) {
     assert(!(data & ~static_cast<uint32_t>(0x00ffffffu)));
