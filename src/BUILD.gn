@@ -5,6 +5,7 @@ source_set("vtlib_impl") {
     "ascii_character_decoder.cc",
     "ascii_character_decoder.h",
     "character_decoder.cc",
+    "terminal.cc",
     "tokenizer.cc",
     "utf8_character_decoder.cc",
     "utf8_character_decoder.h",

@@ -2,9 +2,9 @@
 
 namespace vtlib {
 
-AsciiCharacterDecoder::AsciiCharacterDecoder() {}
+AsciiCharacterDecoder::AsciiCharacterDecoder() = default;
 
-AsciiCharacterDecoder::~AsciiCharacterDecoder() {}
+AsciiCharacterDecoder::~AsciiCharacterDecoder() = default;
 
 bool AsciiCharacterDecoder::ProcessByte(uint8_t input_byte,
                                         size_t* num_output_tokens,

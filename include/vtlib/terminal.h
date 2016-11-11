@@ -1,8 +1,12 @@
 #ifndef VTLIB_INCLUDE_VTLIB_TERMINAL_H_
 #define VTLIB_INCLUDE_VTLIB_TERMINAL_H_
 
-//#include <assert.h>
 #include <stdint.h>
+
+#include <vtlib/character_encoding.h>
+#include <vtlib/state_changes.h>
+#include <vtlib/token.h>
+#include <vtlib/tokenizer.h>
 
 namespace vtlib {
 
@@ -11,26 +15,44 @@ class StateChanges;
 
 // Represesents the state of one terminal. The basic interface is that the
 // caller provides a sequence of input bytes ("characters"), and for each byte
-// the state of the terminal is updated. Moreover, the caller is informed of
-// what kind of state (e.g., display) changes resulted from each input byte,
-// together with any "immediate" actions which need to be taken (e.g., ringing a
-// bell).
-//
-// The caller may choose to "accumulate" state changes and defer acting on them
-// as appropriate (e.g., defer updating the display) and allowable (e.g., a
-// given input byte may result in the requirement that a particular string of
-// input bytes be inserted into the input stream; this must be done
-// "synchronously").
+// the state of the terminal is updated.
 //FIXME moar
 class Terminal {
  public:
-//FIXME
+  struct Options {
+//FIXME much moar
+    bool accept_8bit_C1;
+    CharacterEncoding character_encoding;
+  };
 
-  void OnInput(uint8_t input_byte, StateChanges* state_changes);
+  explicit Terminal(const Options& options);
+  ~Terminal();
+
+  Terminal(const Terminal&) = delete;
+  Terminal& operator=(const Terminal&) = delete;
+
+//FIXME
+  bool ProcessByte(uint8_t input_byte);
+
+  const Options& options() const { return options_; }
+  void options_set_accept_8bit_C1(bool accept_8bit_C1) {
+    tokenizer_.set_accept_8bit_C1(accept_8bit_C1);
+  }
+  void options_set_character_encoding(CharacterEncoding character_encoding) {
+    tokenizer_.set_character_encoding(character_encoding);
+  }
+
+  const StateChanges& state_changes() const { return state_changes_; }
+  void reset_state_changes() { state_changes_ = StateChanges(); }
 
  private:
+  // Helper for |ProcessByte()|.
+  bool ProcessToken(Token token);
 
-//FIXME disallow copy and assign
+  Options options_;
+  StateChanges state_changes_;
+
+  Tokenizer tokenizer_;
 };
 
 }  // namespace vtlib

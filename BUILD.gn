@@ -23,6 +23,8 @@ source_set("headers") {
     "include/vtlib/character_decoder.h",
     "include/vtlib/character_encoding.h",
     "include/vtlib/color.h",
+    "include/vtlib/coordinates.h",
+    "include/vtlib/state_changes.h",
     "include/vtlib/terminal.h",
     "include/vtlib/token.h",
     "include/vtlib/tokenizer.h",

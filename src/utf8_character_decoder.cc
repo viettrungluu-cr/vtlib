@@ -62,7 +62,7 @@ size_t IsLeadingByte(uint8_t b) {
 Utf8CharacterDecoder::Utf8CharacterDecoder(Token replacement_token)
     : replacement_token_(replacement_token) {}
 
-Utf8CharacterDecoder::~Utf8CharacterDecoder() {}
+Utf8CharacterDecoder::~Utf8CharacterDecoder() = default;
 
 bool Utf8CharacterDecoder::ProcessByte(uint8_t input_byte,
                                        size_t* num_output_tokens,

@@ -34,13 +34,17 @@ namespace vtlib {
 // is processed as possibly being a C0 control code or (if enabled) an 8-bit C1
 // control code.
 //
-// Invalid escape sequence processing: If we encounter ESC c for some c outside
-// the range 64..95, we simply forget about the ESC and process c as if it were
-// a new character. E.g., if we encounter ESC c1 c2 c3 ... where c1 c2 is a
-// valid two-byte UTF-8 encoding, we will decode c1 c2 c3 .... As far as I can
-// tell, this is like screen, unlike XTerm (which will also drop the next
-// graphical character, i.e., c1 c2), and unlike Gnome Terminal (which is
-// confused).
+// If the previous byte was ESC and if the current byte is in the range
+// 128..159, then we emit a token for a C1 code as indicated above. Otherwise,
+// we emit a token for ESC and start processing anew. How the resulting output
+// is processed is a problem for a different layer. However, this does have a
+// consequence: non-C1 escape sequences will be processed after passing through
+// the character decoder, so are of the form ESC t where t is a token (possibly
+// a Unicode codepoint) instead of ESC c for some ASCII byte c. This is largely
+// not a problem since most (TODO(vtl): all supported?) character encodings
+// encode ASCII codepoints in the trivial way, but it would be potentially
+// problematic if this were not the case (or if there are alternate encodings
+// for the ASCII codepoints).
 //
 // TODO(vtl): Moar.
 
@@ -77,6 +81,9 @@ class Tokenizer {
   // Returns the previous |CharacterDecoder|.
   std::unique_ptr<CharacterDecoder> set_character_decoder(
       std::unique_ptr<CharacterDecoder> character_decoder);
+  // Convience form of |set_character_decoder()| (discards the previous
+  // |CharacterDecoder|).
+  void set_character_encoding(CharacterEncoding character_encoding);
 
  private:
   bool accept_8bit_C1_;  // Are 8-bit C1 control codes enabled?

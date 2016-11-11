@@ -15,7 +15,7 @@ constexpr size_t kMaxOutputTokensPerInputByte = 4u;
 
 class CharacterDecoder {
  public:
-  virtual ~CharacterDecoder() {}
+  virtual ~CharacterDecoder() = default;
 
   // Static factory method. Returns null if a character encoding is not
   // supported.

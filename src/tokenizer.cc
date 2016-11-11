@@ -18,7 +18,7 @@ Tokenizer::Tokenizer(bool accept_8bit_C1,
                      CharacterEncoding character_encoding)
     : Tokenizer(accept_8bit_C1, CharacterDecoder::Create(character_encoding)) {}
 
-Tokenizer::~Tokenizer() {}
+Tokenizer::~Tokenizer() = default;
 
 void Tokenizer::ProcessByte(uint8_t input_byte,
                             size_t* num_output_tokens,
@@ -30,6 +30,7 @@ void Tokenizer::ProcessByte(uint8_t input_byte,
       (*num_output_tokens) = 1u;
       return;
     }
+//FIXME
     // On an invalid escape sequence ESC c, will just drop the ESC and start
     // anew with c.
   }
@@ -64,6 +65,10 @@ std::unique_ptr<CharacterDecoder> Tokenizer::set_character_decoder(
   assert(character_decoder);
   std::swap(character_decoder, character_decoder_);
   return character_decoder;
+}
+
+void Tokenizer::set_character_encoding(CharacterEncoding character_encoding) {
+  set_character_decoder(CharacterDecoder::Create(character_encoding));
 }
 
 }  // namespace vtlib
