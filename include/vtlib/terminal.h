@@ -4,14 +4,14 @@
 #include <stdint.h>
 
 #include <vtlib/character_encoding.h>
-#include <vtlib/state_changes.h>
+#include <vtlib/display_updates.h>
 #include <vtlib/token.h>
 #include <vtlib/tokenizer.h>
 
 namespace vtlib {
 
 //FIXME
-class StateChanges;
+class DisplayUpdates;
 
 // Represesents the state of one terminal. The basic interface is that the
 // caller provides a sequence of input bytes ("characters"), and for each byte
@@ -42,15 +42,15 @@ class Terminal {
     tokenizer_.set_character_encoding(character_encoding);
   }
 
-  const StateChanges& state_changes() const { return state_changes_; }
-  void reset_state_changes() { state_changes_ = StateChanges(); }
+  const DisplayUpdates& display_updates() const { return display_updates_; }
+  void reset_display_updates() { display_updates_ = DisplayUpdates(); }
 
  private:
   // Helper for |ProcessByte()|.
   bool ProcessToken(Token token);
 
   Options options_;
-  StateChanges state_changes_;
+  DisplayUpdates display_updates_;
 
   Tokenizer tokenizer_;
 

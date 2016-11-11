@@ -1,5 +1,5 @@
-#ifndef VTLIB_INCLUDE_VTLIB_STATE_CHANGES_H_
-#define VTLIB_INCLUDE_VTLIB_STATE_CHANGES_H_
+#ifndef VTLIB_INCLUDE_VTLIB_DISPLAY_UPDATES_H_
+#define VTLIB_INCLUDE_VTLIB_DISPLAY_UPDATES_H_
 
 #include <stdint.h>
 
@@ -7,8 +7,8 @@
 
 namespace vtlib {
 
-struct StateChanges {
-  StateChanges() = default;
+struct DisplayUpdates {
+  DisplayUpdates() = default;
 
   // Number of times the bell should be "sounded".
   uint64_t bell_count = 0u;
@@ -20,4 +20,4 @@ struct StateChanges {
 
 }  // namespace vtlib
 
-#endif  // VTLIB_INCLUDE_VTLIB_STATE_CHANGES_H_
+#endif  // VTLIB_INCLUDE_VTLIB_DISPLAY_UPDATES_H_
