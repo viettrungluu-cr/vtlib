@@ -3,10 +3,12 @@
 
 #include <stdint.h>
 
+#include <memory>
+
+#include <vtlib/character_decoder.h>
 #include <vtlib/character_encoding.h>
+#include <vtlib/codepoint.h>
 #include <vtlib/display_updates.h>
-#include <vtlib/token.h>
-#include <vtlib/tokenizer.h>
 
 namespace vtlib {
 
@@ -34,28 +36,28 @@ class Terminal {
   bool ProcessByte(uint8_t input_byte);
 
   const Options& options() const { return options_; }
-  void options_set_accept_8bit_C1(bool accept_8bit_C1) {
-    tokenizer_.set_accept_8bit_C1(accept_8bit_C1);
+  bool options_set_accept_8bit_C1(bool accept_8bit_C1) {
+    options_.accept_8bit_C1 = accept_8bit_C1;
+    return false;
   }
-  void options_set_character_encoding(CharacterEncoding character_encoding) {
-    tokenizer_.set_character_encoding(character_encoding);
-  }
+  bool options_set_character_encoding(CharacterEncoding character_encoding);
 
   const DisplayUpdates& display_updates() const { return display_updates_; }
   void reset_display_updates() { display_updates_ = DisplayUpdates(); }
 
  private:
-  // Helper for |ProcessByte()|.
-  bool ProcessToken(Token token);
+  // Helper for |ProcessByte()|, etc.
+  bool ProcessCodepoints();
+  bool ProcessCodepoint(Codepoint codepoint);
 
   Options options_;
   DisplayUpdates display_updates_;
 
-  Tokenizer tokenizer_;
+  std::unique_ptr<CharacterDecoder> character_decoder_;
 
   // Used by |ProcessByte()|. This is here so we don't have to re-create it each
   // time.
-  TokenVector tokens_;
+  CodepointVector codepoints_;
 };
 
 }  // namespace vtlib

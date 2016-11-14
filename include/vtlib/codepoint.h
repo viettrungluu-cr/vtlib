@@ -1,0 +1,91 @@
+#ifndef VTLIB_INCLUDE_VTLIB_CODEPOINT_H_
+#define VTLIB_INCLUDE_VTLIB_CODEPOINT_H_
+
+#include <stdint.h>
+
+#include <vector>
+
+namespace vtlib {
+
+// Codepoints either Unicode codepoints (as non-negative values).
+using Codepoint = uint32_t;
+
+using CodepointVector = std::vector<Codepoint>;
+
+// Names for the control code codepoints.
+enum CodepointNames : Codepoint {
+  // C0 control codes:
+  CODEPOINT_NUL = 0u,
+  CODEPOINT_SOH = 1u,
+  CODEPOINT_STX = 2u,
+  CODEPOINT_ETX = 3u,
+  CODEPOINT_EOT = 4u,
+  CODEPOINT_ENQ = 5u,
+  CODEPOINT_ACK = 6u,
+  CODEPOINT_BEL = 7u,
+  CODEPOINT_BS = 8u,
+  CODEPOINT_HT = 9u,
+  CODEPOINT_LF = 10u,
+  CODEPOINT_VT = 11u,
+  CODEPOINT_FF = 12u,
+  CODEPOINT_CR = 13u,
+  CODEPOINT_SO = 14u,
+  CODEPOINT_SI = 15u,
+  CODEPOINT_DLE = 16u,
+  CODEPOINT_DC1 = 17u,
+  CODEPOINT_DC2 = 18u,
+  CODEPOINT_DC3 = 19u,
+  CODEPOINT_DC4 = 20u,
+  CODEPOINT_NAK = 21u,
+  CODEPOINT_SYN = 22u,
+  CODEPOINT_ETB = 23u,
+  CODEPOINT_CAN = 24u,
+  CODEPOINT_EM = 25u,
+  CODEPOINT_SUB = 26u,
+  CODEPOINT_ESC = 27u,
+  CODEPOINT_FS = 28u,
+  CODEPOINT_GS = 29u,
+  CODEPOINT_RS = 30u,
+  CODEPOINT_US = 31u,
+
+  // C1 control codes:
+  CODEPOINT_PAD = 128u,
+  CODEPOINT_HOP = 129u,
+  CODEPOINT_BPH = 130u,
+  CODEPOINT_NBH = 131u,
+  CODEPOINT_IND = 132u,
+  CODEPOINT_NEL = 133u,
+  CODEPOINT_SSA = 134u,
+  CODEPOINT_ESA = 135u,
+  CODEPOINT_HTS = 136u,
+  CODEPOINT_HTJ = 137u,
+  CODEPOINT_VTS = 138u,
+  CODEPOINT_PLD = 139u,
+  CODEPOINT_PLU = 140u,
+  CODEPOINT_RI = 141u,
+  CODEPOINT_SS2 = 142u,
+  CODEPOINT_SS3 = 143u,
+  CODEPOINT_DCS = 144u,
+  CODEPOINT_PU1 = 145u,
+  CODEPOINT_PU2 = 146u,
+  CODEPOINT_STS = 147u,
+  CODEPOINT_CCH = 148u,
+  CODEPOINT_MW = 149u,
+  CODEPOINT_SPA = 150u,
+  CODEPOINT_EPA = 151u,
+  CODEPOINT_SOS = 152u,
+  CODEPOINT_SGCI = 153u,
+  CODEPOINT_SCI = 154u,
+  CODEPOINT_CSI = 155u,
+  CODEPOINT_ST = 156u,
+  CODEPOINT_OSC = 157u,
+  CODEPOINT_PM = 158u,
+  CODEPOINT_APC = 159u,
+
+  // Unicode replacement character:
+  CODEPOINT_REPLACEMENT = 0xfffdu,
+};
+
+}  // namespace vtlib
+
+#endif  // VTLIB_INCLUDE_VTLIB_CODEPOINT_H_

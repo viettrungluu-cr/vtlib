@@ -2,7 +2,7 @@
 
 #include <assert.h>
 
-#include <vtlib/token.h>
+#include <vtlib/codepoint.h>
 
 // Notes:
 //
@@ -55,126 +55,117 @@ size_t IsLeadingByte(uint8_t b) {
 
 }  // namespace
 
-Utf8CharacterDecoder::Utf8CharacterDecoder(Token replacement_token)
-    : replacement_token_(replacement_token) {}
-
-Utf8CharacterDecoder::~Utf8CharacterDecoder() = default;
-
-bool Utf8CharacterDecoder::ProcessByte(uint8_t input_byte,
-                                       TokenVector* output_tokens) {
+void Utf8CharacterDecoder::ProcessByte(uint8_t input_byte,
+                                       CodepointVector* output_codepoints) {
   // Regardless, if we see a leading byte, we resynchronize.
   if (size_t n = IsLeadingByte(input_byte))
-    return ProcessLeadingByte(n, input_byte, output_tokens);
-  return ProcessContinuationByte(input_byte, output_tokens);
+    ProcessLeadingByte(n, input_byte, output_codepoints);
+  else
+    ProcessContinuationByte(input_byte, output_codepoints);
 }
 
-bool Utf8CharacterDecoder::ProcessLeadingByte(size_t n,
-                                              uint8_t input_byte,
-                                              TokenVector* output_tokens) {
-  // If we see a leading byte, we resynchronize.
-
+void Utf8CharacterDecoder::Flush(CodepointVector* output_codepoints) {
   // Output replacement characters for any buffered bytes.
   for (size_t i = 0u; i < num_have_; i++)
-    output_tokens->push_back(replacement_token_);
+    output_codepoints->push_back(CODEPOINT_REPLACEMENT);
 
   num_needed_ = 0u;
   num_have_ = 0u;
+}
+
+void Utf8CharacterDecoder::ProcessLeadingByte(
+    size_t n,
+    uint8_t input_byte,
+    CodepointVector* output_codepoints) {
+  // If we see a leading byte, we resynchronize.
+  Flush(output_codepoints);
 
   switch (n) {
     case 1u:
-      // Note: We never allow 8-bit C1 control codes.
-      if (is_C0_control_code(input_byte))
-        return false;
-      // Output a token.
-      output_tokens->push_back(static_cast<Token>(input_byte));
-      return true;
+      output_codepoints->push_back(static_cast<Codepoint>(input_byte));
+      break;
     case 2u: {
       uint8_t data = input_byte & 0x1fu;
       if (data < 0x02u) {  // Overlong encoding.
-        output_tokens->push_back(replacement_token_);
+        output_codepoints->push_back(CODEPOINT_REPLACEMENT);
       } else {
         num_needed_ = 2u;
         num_have_ = 1u;
-        current_value_ = static_cast<Token>(data) << 6;
+        current_value_ = static_cast<Codepoint>(data) << 6;
       }
-      return true;
+      break;
     }
     case 3u:
       num_needed_ = 3u;
       num_have_ = 1u;
-      current_value_ = static_cast<Token>(input_byte & 0x0fu) << 12;
-      return true;
+      current_value_ = static_cast<Codepoint>(input_byte & 0x0fu) << 12;
+      break;
     case 4u: {
       uint8_t data = input_byte & 0x07u;
       if (data >= 0x05u) {  // Invalid codepoint (greater than U+10FFFF).
-        output_tokens->push_back(replacement_token_);
+        output_codepoints->push_back(CODEPOINT_REPLACEMENT);
       } else {
         num_needed_ = 4u;
         num_have_ = 1u;
-        current_value_ = static_cast<Token>(data) << 18;
+        current_value_ = static_cast<Codepoint>(data) << 18;
       }
-      return true;
+      break;
     }
     case static_cast<size_t>(-1):  // Invalid byte.
-      output_tokens->push_back(replacement_token_);
-      return true;
-    default:
-      assert(false);
-      return false;
+      output_codepoints->push_back(CODEPOINT_REPLACEMENT);
+      break;
   }
 }
 
-bool Utf8CharacterDecoder::ProcessContinuationByte(uint8_t input_byte,
-                                                   TokenVector* output_tokens) {
+void Utf8CharacterDecoder::ProcessContinuationByte(
+    uint8_t input_byte,
+    CodepointVector* output_codepoints) {
   uint8_t data = input_byte & 0x3fu;
   switch (num_needed_) {
     case 0u:  // Unexpected continuation.
-      output_tokens->push_back(replacement_token_);
-      return true;
+      output_codepoints->push_back(CODEPOINT_REPLACEMENT);
+      return;
     case 2u:
       break;
     case 3u:
       // Overlong encoding or invalid codepoint (U+D800 to U+DFFF).
       if (num_have_ == 1u && ((!current_value_ && data < 0x20u) ||
                               (current_value_ == 0xd000u && data >= 0x20u))) {
-        output_tokens->push_back(replacement_token_);
-        output_tokens->push_back(replacement_token_);
+        output_codepoints->push_back(CODEPOINT_REPLACEMENT);
+        output_codepoints->push_back(CODEPOINT_REPLACEMENT);
         num_needed_ = 0u;
         num_have_ = 0u;
-        return true;
+        return;
       }
       break;
     case 4u:
       // Overlong encoding or invalid codepoint (greater than U+10FFFF).
       if (num_have_ == 1u && ((!current_value_ && data < 0x10u) ||
                               (current_value_ >= 0x100000 && data >= 0x10u))) {
-        output_tokens->push_back(replacement_token_);
-        output_tokens->push_back(replacement_token_);
+        output_codepoints->push_back(CODEPOINT_REPLACEMENT);
+        output_codepoints->push_back(CODEPOINT_REPLACEMENT);
         num_needed_ = 0u;
         num_have_ = 0u;
-        return true;
+        return;
       }
       break;
     default:
       assert(false);
-      num_needed_ = 0u;
-      num_have_ = 0u;
-      return false;
+      return;
   }
 
   assert(num_have_ < num_needed_);
   num_have_++;
-  current_value_ |= static_cast<Token>(data) << ((num_needed_ - num_have_) * 6);
+  current_value_ |= static_cast<Codepoint>(data)
+                    << ((num_needed_ - num_have_) * 6);
 
   if (num_have_ == num_needed_) {
     assert(!(current_value_ >= 0xd800 && current_value_ <= 0xdfff));
     assert(current_value_ <= 0x10ffff);
-    output_tokens->push_back(current_value_);
+    output_codepoints->push_back(current_value_);
     num_needed_ = 0u;
     num_have_ = 0u;
   }
-
-  return true;
 }
 
 }  // namespace vtlib

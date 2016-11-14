@@ -13,11 +13,10 @@ namespace vtlib {
 // Invalid encodings/codepoints:
 //
 // If a *byte* is accepted but cannot decoded as a part of a valid codepoint,
-// then a replacement token (by default, U+FFFD, the Unicode replacement
-// character) will be emitted for it, and the state of the decoder reset.
-//
-// For sequences that may appear to be valid UTF-8 encodings, but do not
-// actually encode a valid codepoint, this is done as soon as possible.
+// then this will emit the Unicode replacement character, U+FFFD, and the state
+// of the decoder reset. For sequences that may appear to be valid UTF-8
+// encodings, but do not actually encode a valid codepoint, this is done as soon
+// as possible.
 //
 // For example, the following sequence of bytes encodes the invalid codepoint
 // U+D800: 0xed, 0xa0, 0x80.
@@ -25,10 +24,10 @@ namespace vtlib {
 //     encoding for a valid codepoint (e.g., U+D000).
 //   - But upon receiving 0xa0, it is known that this can only encode an invalid
 //     codepoint, in the range U+D000 to U+D7FF; at this point, we emit *two*
-//     replacement tokens (one for each byte), and reset the decoder.
-//   - On receiving 0x80, we emit another replacement token, since we are not
-//     expecting a continuation byte.
-//   - Thus in all, we emit three replacement tokens.
+//     replacement characters (one for each byte), and reset the decoder.
+//   - On receiving 0x80, we emit another replacement characters, since we are
+//     not expecting a continuation byte.
+//   - Thus in all, we emit three replacement characters.
 //   - This behavior is consistent-ish with Gnome Terminal
 //   - However, Gnome Terminal only emits the three replacement characters after
 //     receiving all three bytes.
@@ -37,7 +36,7 @@ namespace vtlib {
 //
 // Similarly, for the truncated sequence for an invalid codepoint 0xed, 0xa0,
 // 'X':
-//   - We emit two replacement tokens, followed by 'X'.
+//   - We emit two replacement characters, followed by 'X'.
 //   - The observed behavior is consistent with Gnome Terminal, except that
 //     Gnome Terminal only does this after receiving the third byte.
 //   - Again, XTerm and screen behave differently: they emit one replacement
@@ -45,26 +44,23 @@ namespace vtlib {
 //     third byte).
 class Utf8CharacterDecoder : public CharacterDecoder {
  public:
-  // The default replacement token is just the Unicode replacement character
-  // U+FFFD.
-  explicit Utf8CharacterDecoder(Token replacement_token = 0xfffd);
-  ~Utf8CharacterDecoder() override;
+  Utf8CharacterDecoder() = default;
+  ~Utf8CharacterDecoder() override = default;
 
   Utf8CharacterDecoder(const Utf8CharacterDecoder&) = delete;
   Utf8CharacterDecoder& operator=(const Utf8CharacterDecoder&) = delete;
 
-  bool ProcessByte(uint8_t input_byte, TokenVector* output_tokens) override;
-
-  Token replacement_token() const { return replacement_token_; }
+  void ProcessByte(uint8_t input_byte,
+                   CodepointVector* output_codepoints) override;
+  void Flush(CodepointVector* output_codepoints) override;
 
  private:
   // Helpers for |ProcessByte()|:
-  bool ProcessLeadingByte(size_t n,
+  void ProcessLeadingByte(size_t n,
                           uint8_t input_byte,
-                          TokenVector* output_tokens);
-  bool ProcessContinuationByte(uint8_t input_byte, TokenVector* output_tokens);
-
-  const Token replacement_token_;
+                          CodepointVector* output_codepoints);
+  void ProcessContinuationByte(uint8_t input_byte,
+                               CodepointVector* output_codepoints);
 
   // Number of bytes needed for the current encoded codepoint (valid values: 0,
   // 2, 3, 4). UTF-8 uses most 4 bytes per codepoint encoding and 1 is not
@@ -77,7 +73,7 @@ class Utf8CharacterDecoder : public CharacterDecoder {
 
   // The value of the current codepoint, as far as we've seen (only meaningful
   // if |num_needed_| is nonzero).
-  Token current_value_ = 0;
+  Codepoint current_value_ = 0;
 };
 
 }  // namespace vtlib

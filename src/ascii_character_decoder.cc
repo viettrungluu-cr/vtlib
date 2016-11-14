@@ -1,17 +1,22 @@
 #include "src/ascii_character_decoder.h"
 
+#include <vtlib/codepoint.h>
+
 namespace vtlib {
 
 AsciiCharacterDecoder::AsciiCharacterDecoder() = default;
 
 AsciiCharacterDecoder::~AsciiCharacterDecoder() = default;
 
-bool AsciiCharacterDecoder::ProcessByte(uint8_t input_byte,
-                                        TokenVector* output_tokens) {
-  if (is_C0_control_code(input_byte) || input_byte >= 128u)
-    return false;
-  output_tokens->push_back(static_cast<Token>(input_byte));
-  return true;
+void AsciiCharacterDecoder::ProcessByte(uint8_t input_byte,
+                                        CodepointVector* output_codepoints) {
+  output_codepoints->push_back((input_byte <= 159u)
+                                   ? static_cast<Codepoint>(input_byte)
+                                   : CODEPOINT_REPLACEMENT);
+}
+
+void AsciiCharacterDecoder::Flush(CodepointVector* output_codepoints) {
+  // This decoder is stateless.
 }
 
 }  // namespace vtlib

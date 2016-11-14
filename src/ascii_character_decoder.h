@@ -5,7 +5,9 @@
 
 namespace vtlib {
 
-// A trivial character decoder for (7-bit) ASCII.
+// A trivial character decoder for (7-bit) ASCII (which also supports 8-bit C1
+// control codes); it will replace other bytes (>= 160) with the Unicode
+// replacement character, U+FFFD.
 class AsciiCharacterDecoder : public CharacterDecoder {
  public:
   AsciiCharacterDecoder();
@@ -14,7 +16,9 @@ class AsciiCharacterDecoder : public CharacterDecoder {
   AsciiCharacterDecoder(const AsciiCharacterDecoder&) = delete;
   AsciiCharacterDecoder& operator=(const AsciiCharacterDecoder&) = delete;
 
-  bool ProcessByte(uint8_t input_byte, TokenVector* output_tokens) override;
+  void ProcessByte(uint8_t input_byte,
+                   CodepointVector* output_codepoints) override;
+  void Flush(CodepointVector* output_codepoints) override;
 };
 
 }  // namespace vtlib

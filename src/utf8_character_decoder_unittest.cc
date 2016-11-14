@@ -5,32 +5,21 @@
 #include <vector>
 
 #include <gtest/gtest.h>
-#include <vtlib/token.h>
+#include <vtlib/codepoint.h>
 
 namespace vtlib {
 namespace {
 
 // 1 byte:  0xxxxxxx                            - 7 bits
 //                                                U+0 to U+7F
-TEST(Utf8CharacterDecoderTest, Valid1ByteC0) {
+TEST(Utf8CharacterDecoderTest, Valid1Byte) {
   Utf8CharacterDecoder d;
-  TokenVector t;
+  CodepointVector t;
 
-  for (uint8_t c = 0u; c < 0x20u; c++) {
+  for (uint8_t c = 0u; c < 0x80u; c++) {
     t.clear();
-    EXPECT_FALSE(d.ProcessByte(c, &t));
-    EXPECT_EQ(TokenVector(), t) << c;
-  }
-}
-
-TEST(Utf8CharacterDecoderTest, Valid1ByteNonC0) {
-  Utf8CharacterDecoder d;
-  TokenVector t;
-
-  for (uint8_t c = 0x20u; c < 0x80u; c++) {
-    t.clear();
-    EXPECT_TRUE(d.ProcessByte(c, &t));
-    EXPECT_EQ(TokenVector({static_cast<Token>(c)}), t) << c;
+    d.ProcessByte(c, &t);
+    EXPECT_EQ(CodepointVector({static_cast<Codepoint>(c)}), t) << c;
   }
 }
 
@@ -38,16 +27,16 @@ TEST(Utf8CharacterDecoderTest, Valid1ByteNonC0) {
 //                                                U+80 to U+7FF
 TEST(Utf8CharacterDecoderTest, Valid2Byte) {
   Utf8CharacterDecoder d;
-  TokenVector t;
+  CodepointVector t;
 
   for (uint32_t c = 0x80u; c < 0x800u; c++) {
     t.clear();
-    EXPECT_TRUE(d.ProcessByte(static_cast<uint8_t>((c >> 6u) | 0xc0u), &t));
-    EXPECT_EQ(TokenVector(), t) << c;
+    d.ProcessByte(static_cast<uint8_t>((c >> 6u) | 0xc0u), &t);
+    EXPECT_EQ(CodepointVector(), t) << c;
 
     t.clear();
-    EXPECT_TRUE(d.ProcessByte(static_cast<uint8_t>((c & 0x3f) | 0x80u), &t));
-    EXPECT_EQ(TokenVector({static_cast<Token>(c)}), t) << c;
+    d.ProcessByte(static_cast<uint8_t>((c & 0x3f) | 0x80u), &t);
+    EXPECT_EQ(CodepointVector({static_cast<Codepoint>(c)}), t) << c;
   }
 }
 
@@ -56,24 +45,23 @@ TEST(Utf8CharacterDecoderTest, Valid2Byte) {
 //                                                U+E000 to U+FFFF
 TEST(Utf8CharacterDecoderTest, Valid3Byte) {
   Utf8CharacterDecoder d;
-  TokenVector t;
+  CodepointVector t;
 
   for (uint32_t c = 0x800u; c < 0x10000u; c++) {
     if (c >= 0xd800u && c < 0xe000u)
       continue;
 
     t.clear();
-    EXPECT_TRUE(d.ProcessByte(static_cast<uint8_t>((c >> 12u) | 0xe0u), &t));
-    EXPECT_EQ(TokenVector(), t) << c;
+    d.ProcessByte(static_cast<uint8_t>((c >> 12u) | 0xe0u), &t);
+    EXPECT_EQ(CodepointVector(), t) << c;
 
     t.clear();
-    EXPECT_TRUE(
-        d.ProcessByte(static_cast<uint8_t>(((c >> 6u) & 0x3fu) | 0x80u), &t));
-    EXPECT_EQ(TokenVector(), t) << c;
+    d.ProcessByte(static_cast<uint8_t>(((c >> 6u) & 0x3fu) | 0x80u), &t);
+    EXPECT_EQ(CodepointVector(), t) << c;
 
     t.clear();
-    EXPECT_TRUE(d.ProcessByte(static_cast<uint8_t>((c & 0x3f) | 0x80u), &t));
-    EXPECT_EQ(TokenVector({static_cast<Token>(c)}), t) << c;
+    d.ProcessByte(static_cast<uint8_t>((c & 0x3f) | 0x80u), &t);
+    EXPECT_EQ(CodepointVector({static_cast<Codepoint>(c)}), t) << c;
   }
 }
 
@@ -81,202 +69,192 @@ TEST(Utf8CharacterDecoderTest, Valid3Byte) {
 //                                                U+10000 to U+10FFFF
 TEST(Utf8CharacterDecoderTest, Valid4Byte) {
   Utf8CharacterDecoder d;
-  TokenVector t;
+  CodepointVector t;
 
   for (uint32_t c = 0x10000u; c < 0x110000u; c++) {
     t.clear();
-    EXPECT_TRUE(d.ProcessByte(static_cast<uint8_t>((c >> 18u) | 0xf0u), &t));
-    EXPECT_EQ(TokenVector(), t) << c;
+    d.ProcessByte(static_cast<uint8_t>((c >> 18u) | 0xf0u), &t);
+    EXPECT_EQ(CodepointVector(), t) << c;
 
     t.clear();
-    EXPECT_TRUE(
-        d.ProcessByte(static_cast<uint8_t>(((c >> 12u) & 0x3fu) | 0x80u), &t));
-    EXPECT_EQ(TokenVector(), t) << c;
+    d.ProcessByte(static_cast<uint8_t>(((c >> 12u) & 0x3fu) | 0x80u), &t);
+    EXPECT_EQ(CodepointVector(), t) << c;
 
     t.clear();
-    EXPECT_TRUE(
-        d.ProcessByte(static_cast<uint8_t>(((c >> 6u) & 0x3fu) | 0x80u), &t));
-    EXPECT_EQ(TokenVector(), t) << c;
+    d.ProcessByte(static_cast<uint8_t>(((c >> 6u) & 0x3fu) | 0x80u), &t);
+    EXPECT_EQ(CodepointVector(), t) << c;
 
     t.clear();
-    EXPECT_TRUE(d.ProcessByte(static_cast<uint8_t>((c & 0x3f) | 0x80u), &t));
-    EXPECT_EQ(TokenVector({static_cast<Token>(c)}), t) << c;
+    d.ProcessByte(static_cast<uint8_t>((c & 0x3f) | 0x80u), &t);
+    EXPECT_EQ(CodepointVector({static_cast<Codepoint>(c)}), t) << c;
   }
 }
 
 // Tests invalid codepoints U+D800 to U+DFFF.
 TEST(Utf8CharacterDecoderTest, InvalidCodepoints1) {
   Utf8CharacterDecoder d;
-  TokenVector t;
-  EXPECT_EQ(static_cast<Token>(0xfffd), d.replacement_token());
+  CodepointVector t;
 
   for (uint32_t c = 0xd800u; c < 0xe000u; c++) {
     // After the first byte, we can't tell anything.
     t.clear();
-    EXPECT_TRUE(d.ProcessByte(static_cast<uint8_t>((c >> 12u) | 0xe0u), &t));
-    EXPECT_EQ(TokenVector(), t) << c;
+    d.ProcessByte(static_cast<uint8_t>((c >> 12u) | 0xe0u), &t);
+    EXPECT_EQ(CodepointVector(), t) << c;
 
     // After the second byte, we can already tell that it's invalid (and we
     // should immediately emit two replacement tokens).
     t.clear();
-    EXPECT_TRUE(
-        d.ProcessByte(static_cast<uint8_t>(((c >> 6u) & 0x3fu) | 0x80u), &t));
-    EXPECT_EQ(TokenVector({0xfffd, 0xfffd}), t) << c;
+    d.ProcessByte(static_cast<uint8_t>(((c >> 6u) & 0x3fu) | 0x80u), &t);
+    EXPECT_EQ(CodepointVector({CODEPOINT_REPLACEMENT, CODEPOINT_REPLACEMENT}),
+              t)
+        << c;
 
     // The third byte will also be detected as invalid (since it's an unexpected
     // continuation byte).
     t.clear();
-    EXPECT_TRUE(d.ProcessByte(static_cast<uint8_t>((c & 0x3f) | 0x80u), &t));
-    EXPECT_EQ(TokenVector({0xfffd}), t) << c;
+    d.ProcessByte(static_cast<uint8_t>((c & 0x3f) | 0x80u), &t);
+    EXPECT_EQ(CodepointVector({CODEPOINT_REPLACEMENT}), t) << c;
   }
 }
 
 // Tests invalid codepoints U+110000 to U+13FFFF
 TEST(Utf8CharacterDecoderTest, InvalidCodepoints2) {
   Utf8CharacterDecoder d;
-  TokenVector t;
-  EXPECT_EQ(static_cast<Token>(0xfffd), d.replacement_token());
+  CodepointVector t;
 
   for (uint32_t c = 0x110000u; c < 0x140000u; c++) {
     // After the first byte, we can't tell anything.
     t.clear();
-    EXPECT_TRUE(d.ProcessByte(static_cast<uint8_t>((c >> 18u) | 0xf0u), &t));
-    EXPECT_EQ(TokenVector(), t) << c;
+    d.ProcessByte(static_cast<uint8_t>((c >> 18u) | 0xf0u), &t);
+    EXPECT_EQ(CodepointVector(), t) << c;
 
     // After the second byte, we can already tell that it's invalid.
     t.clear();
-    EXPECT_TRUE(
-        d.ProcessByte(static_cast<uint8_t>(((c >> 12u) & 0x3fu) | 0x80u), &t));
-    EXPECT_EQ(TokenVector({0xfffd, 0xfffd}), t) << c;
+    d.ProcessByte(static_cast<uint8_t>(((c >> 12u) & 0x3fu) | 0x80u), &t);
+    EXPECT_EQ(CodepointVector({CODEPOINT_REPLACEMENT, CODEPOINT_REPLACEMENT}),
+              t)
+        << c;
 
     // The remaining two bytes will also each be detected as invalid (since they
     // are unexpected continuation bytes).
     t.clear();
-    EXPECT_TRUE(
-        d.ProcessByte(static_cast<uint8_t>(((c >> 6u) & 0x3fu) | 0x80u), &t));
-    EXPECT_EQ(TokenVector({0xfffd}), t) << c;
+    d.ProcessByte(static_cast<uint8_t>(((c >> 6u) & 0x3fu) | 0x80u), &t);
+    EXPECT_EQ(CodepointVector({CODEPOINT_REPLACEMENT}), t) << c;
 
     t.clear();
-    EXPECT_TRUE(d.ProcessByte(static_cast<uint8_t>((c & 0x3f) | 0x80u), &t));
-    EXPECT_EQ(TokenVector({0xfffd}), t) << c;
+    d.ProcessByte(static_cast<uint8_t>((c & 0x3f) | 0x80u), &t);
+    EXPECT_EQ(CodepointVector({CODEPOINT_REPLACEMENT}), t) << c;
   }
 }
 
 // Tests invalid codepoints U+140000 to U+1FFFFF.
 TEST(Utf8CharacterDecoderTest, InvalidCodepoints3) {
   Utf8CharacterDecoder d;
-  TokenVector t;
-  EXPECT_EQ(static_cast<Token>(0xfffd), d.replacement_token());
+  CodepointVector t;
 
   for (uint32_t c = 0x140000u; c < 0x200000u; c++) {
     // After the first byte, we can already tell that it's invalid.
     t.clear();
-    EXPECT_TRUE(d.ProcessByte(static_cast<uint8_t>((c >> 18u) | 0xf0u), &t));
-    EXPECT_EQ(TokenVector({0xfffd}), t) << c;
+    d.ProcessByte(static_cast<uint8_t>((c >> 18u) | 0xf0u), &t);
+    EXPECT_EQ(CodepointVector({CODEPOINT_REPLACEMENT}), t) << c;
 
     // The remaining three bytes will also each be detected as invalid (since
     // they are unexpected continuation bytes).
     t.clear();
-    EXPECT_TRUE(
-        d.ProcessByte(static_cast<uint8_t>(((c >> 12u) & 0x3fu) | 0x80u), &t));
-    EXPECT_EQ(TokenVector({0xfffd}), t) << c;
+    d.ProcessByte(static_cast<uint8_t>(((c >> 12u) & 0x3fu) | 0x80u), &t);
+    EXPECT_EQ(CodepointVector({CODEPOINT_REPLACEMENT}), t) << c;
 
     t.clear();
-    EXPECT_TRUE(
-        d.ProcessByte(static_cast<uint8_t>(((c >> 6u) & 0x3fu) | 0x80u), &t));
-    EXPECT_EQ(TokenVector({0xfffd}), t) << c;
+    d.ProcessByte(static_cast<uint8_t>(((c >> 6u) & 0x3fu) | 0x80u), &t);
+    EXPECT_EQ(CodepointVector({CODEPOINT_REPLACEMENT}), t) << c;
 
     t.clear();
-    EXPECT_TRUE(d.ProcessByte(static_cast<uint8_t>((c & 0x3f) | 0x80u), &t));
-    EXPECT_EQ(TokenVector({0xfffd}), t) << c;
+    d.ProcessByte(static_cast<uint8_t>((c & 0x3f) | 0x80u), &t);
+    EXPECT_EQ(CodepointVector({CODEPOINT_REPLACEMENT}), t) << c;
   }
 }
 
 TEST(Utf8CharacterDecoderTest, Overlong2Byte) {
   Utf8CharacterDecoder d;
-  TokenVector t;
-  EXPECT_EQ(static_cast<Token>(0xfffd), d.replacement_token());
+  CodepointVector t;
 
   for (uint32_t c = 0u; c < 0x80u; c++) {
     // After the first byte, we can already tell that it's invalid.
     t.clear();
-    EXPECT_TRUE(d.ProcessByte(static_cast<uint8_t>((c >> 6u) | 0xc0u), &t));
-    EXPECT_EQ(TokenVector({0xfffd}), t) << c;
+    d.ProcessByte(static_cast<uint8_t>((c >> 6u) | 0xc0u), &t);
+    EXPECT_EQ(CodepointVector({CODEPOINT_REPLACEMENT}), t) << c;
 
     t.clear();
-    EXPECT_TRUE(d.ProcessByte(static_cast<uint8_t>((c & 0x3f) | 0x80u), &t));
-    EXPECT_EQ(TokenVector({0xfffd}), t) << c;
+    d.ProcessByte(static_cast<uint8_t>((c & 0x3f) | 0x80u), &t);
+    EXPECT_EQ(CodepointVector({CODEPOINT_REPLACEMENT}), t) << c;
   }
 }
 
 TEST(Utf8CharacterDecoderTest, Overlong3Byte) {
   Utf8CharacterDecoder d;
-  TokenVector t;
-  EXPECT_EQ(static_cast<Token>(0xfffd), d.replacement_token());
+  CodepointVector t;
 
   for (uint32_t c = 0u; c < 0x800u; c++) {
     // After the first byte, we can't tell anything.
     t.clear();
-    EXPECT_TRUE(d.ProcessByte(static_cast<uint8_t>((c >> 12u) | 0xe0u), &t));
-    EXPECT_EQ(TokenVector(), t) << c;
+    d.ProcessByte(static_cast<uint8_t>((c >> 12u) | 0xe0u), &t);
+    EXPECT_EQ(CodepointVector(), t) << c;
 
     // After the second byte, we can already tell that it's invalid.
     t.clear();
-    EXPECT_TRUE(
-        d.ProcessByte(static_cast<uint8_t>(((c >> 6u) & 0x3fu) | 0x80u), &t));
-    EXPECT_EQ(TokenVector({0xfffd, 0xfffd}), t) << c;
+    d.ProcessByte(static_cast<uint8_t>(((c >> 6u) & 0x3fu) | 0x80u), &t);
+    EXPECT_EQ(CodepointVector({CODEPOINT_REPLACEMENT, CODEPOINT_REPLACEMENT}),
+              t)
+        << c;
 
     t.clear();
-    EXPECT_TRUE(d.ProcessByte(static_cast<uint8_t>((c & 0x3f) | 0x80u), &t));
-    EXPECT_EQ(TokenVector({0xfffd}), t) << c;
+    d.ProcessByte(static_cast<uint8_t>((c & 0x3f) | 0x80u), &t);
+    EXPECT_EQ(CodepointVector({CODEPOINT_REPLACEMENT}), t) << c;
   }
 }
 
 TEST(Utf8CharacterDecoderTest, Overlong4Byte) {
   Utf8CharacterDecoder d;
-  TokenVector t;
-  EXPECT_EQ(static_cast<Token>(0xfffd), d.replacement_token());
+  CodepointVector t;
 
   for (uint32_t c = 0u; c < 0x10000u; c++) {
     // After the first byte, we can't tell anything.
     t.clear();
-    EXPECT_TRUE(d.ProcessByte(static_cast<uint8_t>((c >> 18u) | 0xf0u), &t));
-    EXPECT_EQ(TokenVector(), t) << c;
+    d.ProcessByte(static_cast<uint8_t>((c >> 18u) | 0xf0u), &t);
+    EXPECT_EQ(CodepointVector(), t) << c;
 
     // After the second byte, we can already tell that it's invalid.
     t.clear();
-    EXPECT_TRUE(
-        d.ProcessByte(static_cast<uint8_t>(((c >> 12u) & 0x3fu) | 0x80u), &t));
-    EXPECT_EQ(TokenVector({0xfffd, 0xfffd}), t) << c;
+    d.ProcessByte(static_cast<uint8_t>(((c >> 12u) & 0x3fu) | 0x80u), &t);
+    EXPECT_EQ(CodepointVector({CODEPOINT_REPLACEMENT, CODEPOINT_REPLACEMENT}),
+              t)
+        << c;
 
     t.clear();
-    EXPECT_TRUE(
-        d.ProcessByte(static_cast<uint8_t>(((c >> 6u) & 0x3fu) | 0x80u), &t));
-    EXPECT_EQ(TokenVector({0xfffd}), t) << c;
+    d.ProcessByte(static_cast<uint8_t>(((c >> 6u) & 0x3fu) | 0x80u), &t);
+    EXPECT_EQ(CodepointVector({CODEPOINT_REPLACEMENT}), t) << c;
 
     t.clear();
-    EXPECT_TRUE(d.ProcessByte(static_cast<uint8_t>((c & 0x3f) | 0x80u), &t));
-    EXPECT_EQ(TokenVector({0xfffd}), t) << c;
+    d.ProcessByte(static_cast<uint8_t>((c & 0x3f) | 0x80u), &t);
+    EXPECT_EQ(CodepointVector({CODEPOINT_REPLACEMENT}), t) << c;
   }
 }
 
 // Used in test sequences.
 struct TestStep {
-  TestStep(uint8_t i, bool a, TokenVector o)
-      : input(i), accept(a), output(std::move(o)) {}
+  TestStep(uint8_t i, CodepointVector o) : input(i), output(std::move(o)) {}
 
   const uint8_t input;
-  const bool accept;
-  const TokenVector output;
+  const CodepointVector output;
 };
 using TestSequence = std::vector<TestStep>;
 
 void RunTestSequence(Utf8CharacterDecoder* d, TestSequence seq) {
-  TokenVector t;
+  CodepointVector t;
   size_t i = 0u;
   for (const auto& step : seq) {
     t.clear();
-    EXPECT_EQ(step.accept, d->ProcessByte(step.input, &t)) << i;
+    d->ProcessByte(step.input, &t);
     EXPECT_EQ(step.output, t) << i;
     i++;
   }
@@ -292,217 +270,240 @@ void RunTestSequence(Utf8CharacterDecoder* d, TestSequence seq) {
 // First, sanity check these.
 TEST(Utf8CharacterDecoderTest, TestEncodings) {
   Utf8CharacterDecoder d;
-  EXPECT_EQ(0xfffd, d.replacement_token());
 
-  RunTestSequence(&d, {{0x12u, false, {}}});
-  RunTestSequence(&d, {{0x41u, true, {0x41}}});
-  RunTestSequence(&d, {{0xc4u, true, {}}, {0xa3u, true, {0x123}}});
+  RunTestSequence(&d, {{0x12u, {0x12u}}});
+  RunTestSequence(&d, {{0x41u, {0x41u}}});
+  RunTestSequence(&d, {{0xc4u, {}}, {0xa3u, {0x123u}}});
+  RunTestSequence(&d, {{0xe1u, {}}, {0x88u, {}}, {0xb4u, {0x1234u}}});
   RunTestSequence(
-      &d, {{0xe1u, true, {}}, {0x88u, true, {}}, {0xb4u, true, {0x1234}}});
-  RunTestSequence(&d, {{0xf4u, true, {}},
-                       {0x82u, true, {}},
-                       {0x8du, true, {}},
-                       {0x85u, true, {0x102345}}});
-  RunTestSequence(&d, {{0xf8u, true, {0xfffd}}});
+      &d, {{0xf4u, {}}, {0x82u, {}}, {0x8du, {}}, {0x85u, {0x102345u}}});
+  RunTestSequence(&d, {{0xf8u, {CODEPOINT_REPLACEMENT}}});
 }
 
 TEST(Utf8CharacterDecoderTest, Interrupted2Byte) {
   Utf8CharacterDecoder d;
-  EXPECT_EQ(0xfffd, d.replacement_token());
 
   // Interrupted after the 1st byte:
-  RunTestSequence(&d, {{0xc4u, true, {}}, {0x12u, false, {0xfffd}}});
-  RunTestSequence(&d, {{0xc4u, true, {}}, {0x41u, true, {0xfffd, 0x41}}});
+  RunTestSequence(&d, {{0xc4u, {}}, {0x12u, {CODEPOINT_REPLACEMENT, 0x12u}}});
+  RunTestSequence(&d, {{0xc4u, {}}, {0x41u, {CODEPOINT_REPLACEMENT, 0x41u}}});
   RunTestSequence(
-      &d, {{0xc4u, true, {}}, {0xc4u, true, {0xfffd}}, {0xa3u, true, {0x123}}});
-  RunTestSequence(&d, {{0xc4u, true, {}},
-                       {0xe1u, true, {0xfffd}},
-                       {0x88u, true, {}},
-                       {0xb4u, true, {0x1234}}});
-  RunTestSequence(&d, {{0xc4u, true, {}},
-                       {0xf4u, true, {0xfffd}},
-                       {0x82u, true, {}},
-                       {0x8du, true, {}},
-                       {0x85u, true, {0x102345}}});
-  RunTestSequence(&d, {{0xc4u, true, {}}, {0xf8u, true, {0xfffd, 0xfffd}}});
+      &d, {{0xc4u, {}}, {0xc4u, {CODEPOINT_REPLACEMENT}}, {0xa3u, {0x123u}}});
+  RunTestSequence(&d, {{0xc4u, {}},
+                       {0xe1u, {CODEPOINT_REPLACEMENT}},
+                       {0x88u, {}},
+                       {0xb4u, {0x1234u}}});
+  RunTestSequence(&d, {{0xc4u, {}},
+                       {0xf4u, {CODEPOINT_REPLACEMENT}},
+                       {0x82u, {}},
+                       {0x8du, {}},
+                       {0x85u, {0x102345u}}});
+  RunTestSequence(
+      &d,
+      {{0xc4u, {}}, {0xf8u, {CODEPOINT_REPLACEMENT, CODEPOINT_REPLACEMENT}}});
 }
 
 TEST(Utf8CharacterDecoderTest, Interrupted3Byte) {
   Utf8CharacterDecoder d;
-  EXPECT_EQ(0xfffd, d.replacement_token());
 
   // Interrupted after the 1st byte:
-  RunTestSequence(&d, {{0xe1u, true, {}}, {0x12u, false, {0xfffd}}});
-  RunTestSequence(&d, {{0xe1u, true, {}}, {0x41u, true, {0xfffd, 0x41}}});
+  RunTestSequence(&d, {{0xe1u, {}}, {0x12u, {CODEPOINT_REPLACEMENT, 0x12u}}});
+  RunTestSequence(&d, {{0xe1u, {}}, {0x41u, {CODEPOINT_REPLACEMENT, 0x41u}}});
   RunTestSequence(
-      &d, {{0xe1u, true, {}}, {0xc4u, true, {0xfffd}}, {0xa3u, true, {0x123}}});
-  RunTestSequence(&d, {{0xe1u, true, {}},
-                       {0xe1u, true, {0xfffd}},
-                       {0x88u, true, {}},
-                       {0xb4u, true, {0x1234}}});
-  RunTestSequence(&d, {{0xe1u, true, {}},
-                       {0xf4u, true, {0xfffd}},
-                       {0x82u, true, {}},
-                       {0x8du, true, {}},
-                       {0x85u, true, {0x102345}}});
-  RunTestSequence(&d, {{0xe1u, true, {}}, {0xf8u, true, {0xfffd, 0xfffd}}});
+      &d, {{0xe1u, {}}, {0xc4u, {CODEPOINT_REPLACEMENT}}, {0xa3u, {0x123u}}});
+  RunTestSequence(&d, {{0xe1u, {}},
+                       {0xe1u, {CODEPOINT_REPLACEMENT}},
+                       {0x88u, {}},
+                       {0xb4u, {0x1234u}}});
+  RunTestSequence(&d, {{0xe1u, {}},
+                       {0xf4u, {CODEPOINT_REPLACEMENT}},
+                       {0x82u, {}},
+                       {0x8du, {}},
+                       {0x85u, {0x102345u}}});
+  RunTestSequence(
+      &d,
+      {{0xe1u, {}}, {0xf8u, {CODEPOINT_REPLACEMENT, CODEPOINT_REPLACEMENT}}});
 
   // Interrupted after the 2nd byte:
   RunTestSequence(
-      &d,
-      {{0xe1u, true, {}}, {0x88u, true, {}}, {0x12u, false, {0xfffd, 0xfffd}}});
-  RunTestSequence(&d, {{0xe1u, true, {}},
-                       {0x88u, true, {}},
-                       {0x41u, true, {0xfffd, 0xfffd, 0x41}}});
-  RunTestSequence(&d, {{0xe1u, true, {}},
-                       {0x88u, true, {}},
-                       {0xc4u, true, {0xfffd, 0xfffd}},
-                       {0xa3u, true, {0x123}}});
-  RunTestSequence(&d, {{0xe1u, true, {}},
-                       {0x88u, true, {}},
-                       {0xe1u, true, {0xfffd, 0xfffd}},
-                       {0x88u, true, {}},
-                       {0xb4u, true, {0x1234}}});
-  RunTestSequence(&d, {{0xe1u, true, {}},
-                       {0x88u, true, {}},
-                       {0xf4u, true, {0xfffd, 0xfffd}},
-                       {0x82u, true, {}},
-                       {0x8du, true, {}},
-                       {0x85u, true, {0x102345}}});
-  RunTestSequence(&d, {{0xe1u, true, {}},
-                       {0x88u, true, {}},
-                       {0xf8u, true, {0xfffd, 0xfffd, 0xfffd}}});
+      &d, {{0xe1u, {}},
+           {0x88u, {}},
+           {0x12u, {CODEPOINT_REPLACEMENT, CODEPOINT_REPLACEMENT, 0x12u}}});
+  RunTestSequence(
+      &d, {{0xe1u, {}},
+           {0x88u, {}},
+           {0x41u, {CODEPOINT_REPLACEMENT, CODEPOINT_REPLACEMENT, 0x41u}}});
+  RunTestSequence(&d, {{0xe1u, {}},
+                       {0x88u, {}},
+                       {0xc4u, {CODEPOINT_REPLACEMENT, CODEPOINT_REPLACEMENT}},
+                       {0xa3u, {0x123u}}});
+  RunTestSequence(&d, {{0xe1u, {}},
+                       {0x88u, {}},
+                       {0xe1u, {CODEPOINT_REPLACEMENT, CODEPOINT_REPLACEMENT}},
+                       {0x88u, {}},
+                       {0xb4u, {0x1234u}}});
+  RunTestSequence(&d, {{0xe1u, {}},
+                       {0x88u, {}},
+                       {0xf4u, {CODEPOINT_REPLACEMENT, CODEPOINT_REPLACEMENT}},
+                       {0x82u, {}},
+                       {0x8du, {}},
+                       {0x85u, {0x102345u}}});
+  RunTestSequence(&d, {{0xe1u, {}},
+                       {0x88u, {}},
+                       {0xf8u,
+                        {CODEPOINT_REPLACEMENT, CODEPOINT_REPLACEMENT,
+                         CODEPOINT_REPLACEMENT}}});
 }
 
 TEST(Utf8CharacterDecoderTest, Interrupted4Byte) {
   Utf8CharacterDecoder d;
-  EXPECT_EQ(0xfffd, d.replacement_token());
 
   // Interrupted after the 1st byte:
-  RunTestSequence(&d, {{0xf4u, true, {}}, {0x12u, false, {0xfffd}}});
-  RunTestSequence(&d, {{0xf4u, true, {}}, {0x41u, true, {0xfffd, 0x41}}});
+  RunTestSequence(&d, {{0xf4u, {}}, {0x12u, {CODEPOINT_REPLACEMENT, 0x12u}}});
+  RunTestSequence(&d, {{0xf4u, {}}, {0x41u, {CODEPOINT_REPLACEMENT, 0x41u}}});
   RunTestSequence(
-      &d, {{0xf4u, true, {}}, {0xc4u, true, {0xfffd}}, {0xa3u, true, {0x123}}});
-  RunTestSequence(&d, {{0xf4u, true, {}},
-                       {0xe1u, true, {0xfffd}},
-                       {0x88u, true, {}},
-                       {0xb4u, true, {0x1234}}});
-  RunTestSequence(&d, {{0xf4u, true, {}},
-                       {0xf4u, true, {0xfffd}},
-                       {0x82u, true, {}},
-                       {0x8du, true, {}},
-                       {0x85u, true, {0x102345}}});
-  RunTestSequence(&d, {{0xf4u, true, {}}, {0xf8u, true, {0xfffd, 0xfffd}}});
+      &d, {{0xf4u, {}}, {0xc4u, {CODEPOINT_REPLACEMENT}}, {0xa3u, {0x123u}}});
+  RunTestSequence(&d, {{0xf4u, {}},
+                       {0xe1u, {CODEPOINT_REPLACEMENT}},
+                       {0x88u, {}},
+                       {0xb4u, {0x1234u}}});
+  RunTestSequence(&d, {{0xf4u, {}},
+                       {0xf4u, {CODEPOINT_REPLACEMENT}},
+                       {0x82u, {}},
+                       {0x8du, {}},
+                       {0x85u, {0x102345u}}});
+  RunTestSequence(
+      &d,
+      {{0xf4u, {}}, {0xf8u, {CODEPOINT_REPLACEMENT, CODEPOINT_REPLACEMENT}}});
 
   // Interrupted after the 2nd byte:
   RunTestSequence(
-      &d,
-      {{0xf4u, true, {}}, {0x82u, true, {}}, {0x12u, false, {0xfffd, 0xfffd}}});
-  RunTestSequence(&d, {{0xf4u, true, {}},
-                       {0x82u, true, {}},
-                       {0x41u, true, {0xfffd, 0xfffd, 0x41}}});
-  RunTestSequence(&d, {{0xf4u, true, {}},
-                       {0x82u, true, {}},
-                       {0xc4u, true, {0xfffd, 0xfffd}},
-                       {0xa3u, true, {0x123}}});
-  RunTestSequence(&d, {{0xf4u, true, {}},
-                       {0x82u, true, {}},
-                       {0xe1u, true, {0xfffd, 0xfffd}},
-                       {0x88u, true, {}},
-                       {0xb4u, true, {0x1234}}});
-  RunTestSequence(&d, {{0xf4u, true, {}},
-                       {0x82u, true, {}},
-                       {0xf4u, true, {0xfffd, 0xfffd}},
-                       {0x82u, true, {}},
-                       {0x8du, true, {}},
-                       {0x85u, true, {0x102345}}});
-  RunTestSequence(&d, {{0xf4u, true, {}},
-                       {0x82u, true, {}},
-                       {0xf8u, true, {0xfffd, 0xfffd, 0xfffd}}});
+      &d, {{0xf4u, {}},
+           {0x82u, {}},
+           {0x12u, {CODEPOINT_REPLACEMENT, CODEPOINT_REPLACEMENT, 0x12u}}});
+  RunTestSequence(
+      &d, {{0xf4u, {}},
+           {0x82u, {}},
+           {0x41u, {CODEPOINT_REPLACEMENT, CODEPOINT_REPLACEMENT, 0x41u}}});
+  RunTestSequence(&d, {{0xf4u, {}},
+                       {0x82u, {}},
+                       {0xc4u, {CODEPOINT_REPLACEMENT, CODEPOINT_REPLACEMENT}},
+                       {0xa3u, {0x123u}}});
+  RunTestSequence(&d, {{0xf4u, {}},
+                       {0x82u, {}},
+                       {0xe1u, {CODEPOINT_REPLACEMENT, CODEPOINT_REPLACEMENT}},
+                       {0x88u, {}},
+                       {0xb4u, {0x1234u}}});
+  RunTestSequence(&d, {{0xf4u, {}},
+                       {0x82u, {}},
+                       {0xf4u, {CODEPOINT_REPLACEMENT, CODEPOINT_REPLACEMENT}},
+                       {0x82u, {}},
+                       {0x8du, {}},
+                       {0x85u, {0x102345u}}});
+  RunTestSequence(&d, {{0xf4u, {}},
+                       {0x82u, {}},
+                       {0xf8u,
+                        {CODEPOINT_REPLACEMENT, CODEPOINT_REPLACEMENT,
+                         CODEPOINT_REPLACEMENT}}});
 
   // Interrupted after the 3rd byte:
-  RunTestSequence(&d, {{0xf4u, true, {}},
-                       {0x82u, true, {}},
-                       {0x8du, true, {}},
-                       {0x12u, false, {0xfffd, 0xfffd, 0xfffd}}});
-  RunTestSequence(&d, {{0xf4u, true, {}},
-                       {0x82u, true, {}},
-                       {0x8du, true, {}},
-                       {0x41u, true, {0xfffd, 0xfffd, 0xfffd, 0x41}}});
-  RunTestSequence(&d, {{0xf4u, true, {}},
-                       {0x82u, true, {}},
-                       {0x8du, true, {}},
-                       {0xc4u, true, {0xfffd, 0xfffd, 0xfffd}},
-                       {0xa3u, true, {0x123}}});
-  RunTestSequence(&d, {{0xf4u, true, {}},
-                       {0x82u, true, {}},
-                       {0x8du, true, {}},
-                       {0xe1u, true, {0xfffd, 0xfffd, 0xfffd}},
-                       {0x88u, true, {}},
-                       {0xb4u, true, {0x1234}}});
-  RunTestSequence(&d, {{0xf4u, true, {}},
-                       {0x82u, true, {}},
-                       {0x8du, true, {}},
-                       {0xf4u, true, {0xfffd, 0xfffd, 0xfffd}},
-                       {0x82u, true, {}},
-                       {0x8du, true, {}},
-                       {0x85u, true, {0x102345}}});
-  RunTestSequence(&d, {{0xf4u, true, {}},
-                       {0x82u, true, {}},
-                       {0x8du, true, {}},
-                       {0xf8u, true, {0xfffd, 0xfffd, 0xfffd, 0xfffd}}});
+  RunTestSequence(&d, {{0xf4u, {}},
+                       {0x82u, {}},
+                       {0x8du, {}},
+                       {0x12u,
+                        {CODEPOINT_REPLACEMENT, CODEPOINT_REPLACEMENT,
+                         CODEPOINT_REPLACEMENT, 0x12u}}});
+  RunTestSequence(&d, {{0xf4u, {}},
+                       {0x82u, {}},
+                       {0x8du, {}},
+                       {0x41u,
+                        {CODEPOINT_REPLACEMENT, CODEPOINT_REPLACEMENT,
+                         CODEPOINT_REPLACEMENT, 0x41u}}});
+  RunTestSequence(
+      &d,
+      {{0xf4u, {}},
+       {0x82u, {}},
+       {0x8du, {}},
+       {0xc4u,
+        {CODEPOINT_REPLACEMENT, CODEPOINT_REPLACEMENT, CODEPOINT_REPLACEMENT}},
+       {0xa3u, {0x123u}}});
+  RunTestSequence(
+      &d,
+      {{0xf4u, {}},
+       {0x82u, {}},
+       {0x8du, {}},
+       {0xe1u,
+        {CODEPOINT_REPLACEMENT, CODEPOINT_REPLACEMENT, CODEPOINT_REPLACEMENT}},
+       {0x88u, {}},
+       {0xb4u, {0x1234u}}});
+  RunTestSequence(
+      &d,
+      {{0xf4u, {}},
+       {0x82u, {}},
+       {0x8du, {}},
+       {0xf4u,
+        {CODEPOINT_REPLACEMENT, CODEPOINT_REPLACEMENT, CODEPOINT_REPLACEMENT}},
+       {0x82u, {}},
+       {0x8du, {}},
+       {0x85u, {0x102345u}}});
+  RunTestSequence(&d, {{0xf4u, {}},
+                       {0x82u, {}},
+                       {0x8du, {}},
+                       {0xf8u,
+                        {CODEPOINT_REPLACEMENT, CODEPOINT_REPLACEMENT,
+                         CODEPOINT_REPLACEMENT, CODEPOINT_REPLACEMENT}}});
 }
 
 TEST(Utf8CharacterDecoderTest, UnexpectedContinuationByte) {
   Utf8CharacterDecoder d;
-  EXPECT_EQ(0xfffd, d.replacement_token());
 
   for (uint8_t i = 0u; i < 64u; i++) {
     uint8_t c = i | 0x80u;
+    RunTestSequence(&d, {{c, {CODEPOINT_REPLACEMENT}},
+                         {static_cast<uint8_t>(((i + 32u) % 64u) | 0x80u),
+                          {CODEPOINT_REPLACEMENT}}});
+    RunTestSequence(&d, {{c, {CODEPOINT_REPLACEMENT}}, {0x12u, {0x12u}}});
+    RunTestSequence(&d, {{c, {CODEPOINT_REPLACEMENT}}, {0x41u, {0x41u}}});
     RunTestSequence(
-        &d,
-        {{c, true, {0xfffd}},
-         {static_cast<uint8_t>(((i + 32u) % 64u) | 0x80u), true, {0xfffd}}});
-    RunTestSequence(&d, {{c, true, {0xfffd}}, {0x12u, false, {}}});
-    RunTestSequence(&d, {{c, true, {0xfffd}}, {0x41u, true, {0x41}}});
+        &d, {{c, {CODEPOINT_REPLACEMENT}}, {0xc4u, {}}, {0xa3u, {0x123u}}});
+    RunTestSequence(&d, {{c, {CODEPOINT_REPLACEMENT}},
+                         {0xe1u, {}},
+                         {0x88u, {}},
+                         {0xb4u, {0x1234u}}});
+    RunTestSequence(&d, {{c, {CODEPOINT_REPLACEMENT}},
+                         {0xf4u, {}},
+                         {0x82u, {}},
+                         {0x8du, {}},
+                         {0x85u, {0x102345u}}});
     RunTestSequence(
-        &d, {{c, true, {0xfffd}}, {0xc4u, true, {}}, {0xa3u, true, {0x123}}});
-    RunTestSequence(&d, {{c, true, {0xfffd}},
-                         {0xe1u, true, {}},
-                         {0x88u, true, {}},
-                         {0xb4u, true, {0x1234}}});
-    RunTestSequence(&d, {{c, true, {0xfffd}},
-                         {0xf4u, true, {}},
-                         {0x82u, true, {}},
-                         {0x8du, true, {}},
-                         {0x85u, true, {0x102345}}});
-    RunTestSequence(&d, {{c, true, {0xfffd}}, {0xf8u, true, {0xfffd}}});
+        &d, {{c, {CODEPOINT_REPLACEMENT}}, {0xf8u, {CODEPOINT_REPLACEMENT}}});
   }
 }
 
 // 0b11111xxx (0xf8 to 0xff) are never valid bytes.
 TEST(Utf8CharacterDecoderTest, InvalidByte) {
   Utf8CharacterDecoder d;
-  EXPECT_EQ(0xfffd, d.replacement_token());
 
   for (uint32_t i = 0xf8u; i < 0x100u; i++) {
     uint8_t c = static_cast<uint8_t>(i);
-    RunTestSequence(&d, {{c, true, {0xfffd}}, {0x12u, false, {}}});
-    RunTestSequence(&d, {{c, true, {0xfffd}}, {0x41u, true, {0x41}}});
+    RunTestSequence(&d, {{c, {CODEPOINT_REPLACEMENT}}, {0x12u, {0x12u}}});
+    RunTestSequence(&d, {{c, {CODEPOINT_REPLACEMENT}}, {0x41u, {0x41u}}});
     RunTestSequence(
-        &d, {{c, true, {0xfffd}}, {0xc4u, true, {}}, {0xa3u, true, {0x123}}});
-    RunTestSequence(&d, {{c, true, {0xfffd}},
-                         {0xe1u, true, {}},
-                         {0x88u, true, {}},
-                         {0xb4u, true, {0x1234}}});
-    RunTestSequence(&d, {{c, true, {0xfffd}},
-                         {0xf4u, true, {}},
-                         {0x82u, true, {}},
-                         {0x8du, true, {}},
-                         {0x85u, true, {0x102345}}});
-    RunTestSequence(&d, {{c, true, {0xfffd}}, {0xf8u, true, {0xfffd}}});
+        &d, {{c, {CODEPOINT_REPLACEMENT}}, {0xc4u, {}}, {0xa3u, {0x123u}}});
+    RunTestSequence(&d, {{c, {CODEPOINT_REPLACEMENT}},
+                         {0xe1u, {}},
+                         {0x88u, {}},
+                         {0xb4u, {0x1234u}}});
+    RunTestSequence(&d, {{c, {CODEPOINT_REPLACEMENT}},
+                         {0xf4u, {}},
+                         {0x82u, {}},
+                         {0x8du, {}},
+                         {0x85u, {0x102345u}}});
+    RunTestSequence(
+        &d, {{c, {CODEPOINT_REPLACEMENT}}, {0xf8u, {CODEPOINT_REPLACEMENT}}});
   }
 }
+
+// TODO(vtl): Test |Flush()|.
 
 }  // namespace
 }  // namespace vtlib

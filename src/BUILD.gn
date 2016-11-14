@@ -6,7 +6,6 @@ source_set("vtlib_impl") {
     "ascii_character_decoder.h",
     "character_decoder.cc",
     "terminal.cc",
-    "tokenizer.cc",
     "utf8_character_decoder.cc",
     "utf8_character_decoder.h",
   ]
@@ -20,18 +19,7 @@ group("tests") {
   testonly = true
 
   deps = [
-    ":tokenizer_test",
     ":utf8_character_decoder_test",
-  ]
-}
-
-test("tokenizer_test") {
-  sources = [
-    "tokenizer_unittest.cc",
-  ]
-
-  deps = [
-    ":vtlib_impl",
   ]
 }
 

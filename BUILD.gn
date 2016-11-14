@@ -22,12 +22,11 @@ source_set("headers") {
     "include/vtlib/character.h",
     "include/vtlib/character_decoder.h",
     "include/vtlib/character_encoding.h",
+    "include/vtlib/codepoint.h",
     "include/vtlib/color.h",
     "include/vtlib/coordinates.h",
     "include/vtlib/display_updates.h",
     "include/vtlib/terminal.h",
-    "include/vtlib/token.h",
-    "include/vtlib/tokenizer.h",
   ]
 
   public_configs = [ ":config" ]
