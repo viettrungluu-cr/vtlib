@@ -16,6 +16,8 @@ class AsciiCharacterDecoder : public CharacterDecoder {
   AsciiCharacterDecoder(const AsciiCharacterDecoder&) = delete;
   AsciiCharacterDecoder& operator=(const AsciiCharacterDecoder&) = delete;
 
+  // |CharacterDecoder| implementation:
+  bool Supports8bitC1() const override;
   void ProcessByte(uint8_t input_byte,
                    CodepointVector* output_codepoints) override;
   void Flush(CodepointVector* output_codepoints) override;

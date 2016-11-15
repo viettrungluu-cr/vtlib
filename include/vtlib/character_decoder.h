@@ -20,28 +20,24 @@ class CharacterDecoder {
   static std::unique_ptr<CharacterDecoder> Create(
       CharacterEncoding character_encoding);
 
+  // Returns true if the character encoding that this |CharacterDecoder| decodes
+  // can support 8-bit C1 control characters (i.e., those in the range
+  // 128..159). A consequence of supporting them is that these bytes may not be
+  // used in the encoding of any characters (other than the C1 control codes).
+  virtual bool Supports8bitC1() const = 0;
+
   // |input_byte| is the input byte to be processed. Output (Unicode) codepoints
   // are *appended* to |*output_codepoints|.
   //
-  // Requirements for the processing of control bytes:
-  //   - Bytes/codepoints 0..31 are the C0 control codes (by definition) and
-  //     128..159 are the (8-bit) C1 control codes.
-  //   - Control codes that are accepted must be turned into their corresponding
-  //     codepoints immediately. I.e., if |input_byte| is an accepted control
-  //     code, then the last codepoint appended to |*output_codepoints| must be
-  //     the codepoint with the same value as |input_byte|.
-  //   - When a control code is accepted, there must be no lingering state.
-  //     (I.e., calling |Flush()| afterwards should be a no-op, and result in no
-  //     further codepoints. Nor should any input before the control code have
-  //     an effect on the output after the control code.)
-  //   - Only control code bytes may be mapped to control code codepoints. I.e.,
-  //     there must be no other encoding of the control code codepoints.
-  //   - All C0 control codes must be accepted. Consequently, the bytes 0..31
-  //     must not be used in the encoding of any other codepoint.
-  //   - Either all of the (8-bit) C1 control codes must be accepted (in which
-  //     case the byes 128..159 must not be used in the encoding of any other
-  //     codepoint), or none must be (in which case there must be no way to
-  //     encode the C1 codepoints).
+  // |input_byte| will typically never be a C0 control code (byte in the range
+  // 0..31); consequently, no encoding may use the bytes 0..31 (except to
+  // represent C0 control codes). If |Supports8bitC1()| returns true, it will
+  // also typically never be an 8-bit C1 control code (byte in the range
+  // 128..159); consequently, no encoding supporting 8-bit C1 control codes may
+  // use the bytes 128..159 (except to represent C1 control codes).
+  //
+  // The output codepoints must never include codepoints in these ranges, 0..31
+  // and 128..159.
   virtual void ProcessByte(uint8_t input_byte,
                            CodepointVector* output_codepoints) = 0;
 
@@ -50,6 +46,13 @@ class CharacterDecoder {
   // of a multibyte encoding, it may wish to output replacement characters for
   // the already-seen bytes).
   virtual void Flush(CodepointVector* output_codepoints) = 0;
+
+  // Static helper functions:
+  static bool is_C0_control_code(uint8_t b) { return b <= 31u; }
+  static bool is_C1_control_code(uint8_t b) { return b >= 128u && b <= 159u; }
+  static bool is_control_code(uint8_t b) {
+    return is_C0_control_code(b) || is_C1_control_code(b);
+  }
 
  protected:
   CharacterDecoder() {}

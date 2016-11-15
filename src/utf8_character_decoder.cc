@@ -55,6 +55,14 @@ size_t IsLeadingByte(uint8_t b) {
 
 }  // namespace
 
+Utf8CharacterDecoder::Utf8CharacterDecoder() = default;
+
+Utf8CharacterDecoder::~Utf8CharacterDecoder() = default;
+
+bool Utf8CharacterDecoder::Supports8bitC1() const {
+  return false;
+}
+
 void Utf8CharacterDecoder::ProcessByte(uint8_t input_byte,
                                        CodepointVector* output_codepoints) {
   // Regardless, if we see a leading byte, we resynchronize.

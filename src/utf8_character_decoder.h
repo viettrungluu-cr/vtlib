@@ -44,12 +44,14 @@ namespace vtlib {
 //     third byte).
 class Utf8CharacterDecoder : public CharacterDecoder {
  public:
-  Utf8CharacterDecoder() = default;
-  ~Utf8CharacterDecoder() override = default;
+  Utf8CharacterDecoder();
+  ~Utf8CharacterDecoder() override;
 
   Utf8CharacterDecoder(const Utf8CharacterDecoder&) = delete;
   Utf8CharacterDecoder& operator=(const Utf8CharacterDecoder&) = delete;
 
+  // |CharacterDecoder| implementation:
+  bool Supports8bitC1() const override;
   void ProcessByte(uint8_t input_byte,
                    CodepointVector* output_codepoints) override;
   void Flush(CodepointVector* output_codepoints) override;
