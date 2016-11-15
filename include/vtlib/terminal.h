@@ -5,9 +5,7 @@
 
 #include <memory>
 
-#include <vtlib/character_decoder.h>
 #include <vtlib/character_encoding.h>
-#include <vtlib/codepoint.h>
 #include <vtlib/display_updates.h>
 
 namespace vtlib {
@@ -26,38 +24,26 @@ class Terminal {
     CharacterEncoding character_encoding;
   };
 
-  explicit Terminal(const Options& options);
-  ~Terminal();
+  virtual ~Terminal() = default;
 
   Terminal(const Terminal&) = delete;
   Terminal& operator=(const Terminal&) = delete;
 
+  static std::unique_ptr<Terminal> Create(const Options& options);
+
 //FIXME
-  bool ProcessByte(uint8_t input_byte);
+  virtual bool ProcessByte(uint8_t input_byte) = 0;
 
-  const Options& options() const { return options_; }
-  bool options_set_accept_8bit_C1(bool accept_8bit_C1) {
-    options_.accept_8bit_C1 = accept_8bit_C1;
-    return false;
-  }
-  bool options_set_character_encoding(CharacterEncoding character_encoding);
+  virtual const Options& options() const = 0;
+  virtual bool options_set_accept_8bit_C1(bool accept_8bit_C1) = 0;
+  virtual bool options_set_character_encoding(
+      CharacterEncoding character_encoding) = 0;
 
-  const DisplayUpdates& display_updates() const { return display_updates_; }
-  void reset_display_updates() { display_updates_ = DisplayUpdates(); }
+  virtual const DisplayUpdates& display_updates() const = 0;
+  virtual void reset_display_updates() = 0;
 
- private:
-  // Helper for |ProcessByte()|, etc.
-  bool ProcessCodepoints();
-  bool ProcessCodepoint(Codepoint codepoint);
-
-  Options options_;
-  DisplayUpdates display_updates_;
-
-  std::unique_ptr<CharacterDecoder> character_decoder_;
-
-  // Used by |ProcessByte()|. This is here so we don't have to re-create it each
-  // time.
-  CodepointVector codepoints_;
+ protected:
+  Terminal() = default;
 };
 
 }  // namespace vtlib
